@@ -1,0 +1,42 @@
+import 'react-native-gesture-handler/jestSetup';
+
+jest.mock('react-native-track-player', () => ({
+  setupPlayer: jest.fn().mockResolvedValue(undefined),
+  updateOptions: jest.fn(),
+  add: jest.fn(),
+  reset: jest.fn(),
+  play: jest.fn(),
+  pause: jest.fn(),
+  getState: jest.fn().mockResolvedValue('paused'),
+  getTrack: jest.fn().mockResolvedValue({ title: 'Test Track' }),
+  skipToNext: jest.fn(),
+  skipToPrevious: jest.fn(),
+  registerPlaybackService: jest.fn(),
+  addEventListener: jest.fn(),
+  useTrackPlayerEvents: jest.fn(),
+  useProgress: jest.fn(() => ({ position: 0, duration: 0, buffered: 0 })),
+  Capability: {
+    Play: 'play',
+    Pause: 'pause',
+    Stop: 'stop',
+    Next: 'next',
+    Previous: 'previous',
+  },
+  Event: {
+    RemotePlay: 'remote-play',
+    RemotePause: 'remote-pause',
+    RemoteNext: 'remote-next',
+    RemotePrevious: 'remote-previous',
+    PlaybackTrackChanged: 'playback-track-changed',
+    PlaybackState: 'playback-state',
+  },
+  State: {
+    None: 'none',
+    Ready: 'ready',
+    Playing: 'playing',
+    Paused: 'paused',
+    Stopped: 'stopped',
+    Buffering: 'buffering',
+    Connecting: 'connecting',
+  },
+}));
