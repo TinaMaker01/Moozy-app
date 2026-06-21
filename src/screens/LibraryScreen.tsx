@@ -1,13 +1,34 @@
 import React from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
+import TrackPlayer from 'react-native-track-player';
 import MusicListItem from '../components/MusicListItem';
 
 const MOCK_TRACKS = [
-  { id: '1', title: 'Song One', artist: 'Artist A' },
-  { id: '2', title: 'Song Two', artist: 'Artist B' },
+  {
+    id: '1',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    title: 'Song One',
+    artist: 'Artist A',
+  },
+  {
+    id: '2',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    title: 'Song Two',
+    artist: 'Artist B',
+  },
 ];
 
 const LibraryScreen = () => {
+  const handlePlayTrack = async (track: any) => {
+    try {
+      await TrackPlayer.reset();
+      await TrackPlayer.add(track);
+      await TrackPlayer.play();
+    } catch (error) {
+      console.error('Error playing track:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -17,7 +38,7 @@ const LibraryScreen = () => {
           <MusicListItem
             title={item.title}
             artist={item.artist}
-            onPress={() => console.log('Playing', item.title)}
+            onPress={() => handlePlayTrack(item)}
           />
         )}
       />
