@@ -1,14 +1,32 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
-import TrackPlayer from 'react-native-track-player';
+import TrackPlayer, { useActiveTrack, usePlaybackState, State } from 'react-native-track-player';
 
 const PlayerController = () => {
+  const activeTrack = useActiveTrack();
+  const { state } = usePlaybackState();
+
+  const isPlaying = state === State.Playing;
+
+  const togglePlayback = () => {
+    if (isPlaying) {
+      TrackPlayer.pause();
+    } else {
+      TrackPlayer.play();
+    }
+  };
+
+  if (!activeTrack) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
-      <Text>Now Playing: Track Name</Text>
+      <Text numberOfLines={1} style={styles.trackInfo}>
+        Now Playing: {activeTrack.title} - {activeTrack.artist}
+      </Text>
       <View style={styles.controls}>
-        <Button title="Play" onPress={() => TrackPlayer.play()} />
-        <Button title="Pause" onPress={() => TrackPlayer.pause()} />
+        <Button title={isPlaying ? 'Pause' : 'Play'} onPress={togglePlayback} />
       </View>
     </View>
   );
@@ -17,6 +35,7 @@ const PlayerController = () => {
 const styles = StyleSheet.create({
   container: { padding: 10, backgroundColor: '#eee', borderTopWidth: 1, borderColor: '#ccc' },
   controls: { flexDirection: 'row', justifyContent: 'space-around' },
+  trackInfo: { textAlign: 'center', marginBottom: 5 },
 });
 
 export default PlayerController;
