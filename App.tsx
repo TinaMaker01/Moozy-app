@@ -1,15 +1,26 @@
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import TrackPlayer, { Capability } from 'react-native-track-player';
 import AppNavigator from './src/navigation/AppNavigator';
 import PlayerController from './src/components/PlayerController';
 
 async function setupPlayer() {
-  await TrackPlayer.setupPlayer();
+  try {
+    await TrackPlayer.setupPlayer();
+  } catch (e) {
+    // Player already setup
+  }
+
   await TrackPlayer.updateOptions({
-    capabilities: [Capability.Play, Capability.Pause],
+    capabilities: [
+      Capability.Play,
+      Capability.Pause,
+      Capability.SkipToNext,
+      Capability.SkipToPrevious,
+      Capability.Stop,
+    ],
   });
 }
 
