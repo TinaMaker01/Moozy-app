@@ -1,14 +1,26 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
-import TrackPlayer from 'react-native-track-player';
+import TrackPlayer, { useActiveTrack, usePlaybackState, State } from 'react-native-track-player';
 
 const PlayerController = () => {
+  const activeTrack = useActiveTrack();
+  const { state } = usePlaybackState();
+
+  const isPlaying = state === State.Playing;
+
+  if (!activeTrack) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
-      <Text>Now Playing: Track Name</Text>
+      <Text>Now Playing: {activeTrack.title}</Text>
       <View style={styles.controls}>
-        <Button title="Play" onPress={() => TrackPlayer.play()} />
-        <Button title="Pause" onPress={() => TrackPlayer.pause()} />
+        {isPlaying ? (
+          <Button title="Pause" onPress={() => TrackPlayer.pause()} />
+        ) : (
+          <Button title="Play" onPress={() => TrackPlayer.play()} />
+        )}
       </View>
     </View>
   );
