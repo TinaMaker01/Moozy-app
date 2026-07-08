@@ -1,22 +1,55 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
-import TrackPlayer from 'react-native-track-player';
+import TrackPlayer, { useActiveTrack, usePlaybackState, State } from 'react-native-track-player';
 
 const PlayerController = () => {
+  const activeTrack = useActiveTrack();
+  const { state } = usePlaybackState();
+
+  if (!activeTrack) {
+    return null;
+  }
+
+  const isPlaying = state === State.Playing;
+
+  const togglePlayback = async () => {
+    if (isPlaying) {
+      await TrackPlayer.pause();
+    } else {
+      await TrackPlayer.play();
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text>Now Playing: Track Name</Text>
+      <View style={styles.info}>
+        <Text style={styles.title} numberOfLines={1}>{activeTrack.title}</Text>
+        <Text style={styles.artist} numberOfLines={1}>{activeTrack.artist}</Text>
+      </View>
       <View style={styles.controls}>
-        <Button title="Play" onPress={() => TrackPlayer.play()} />
-        <Button title="Pause" onPress={() => TrackPlayer.pause()} />
+        <Button
+          title={isPlaying ? 'Pause' : 'Play'}
+          onPress={togglePlayback}
+        />
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 10, backgroundColor: '#eee', borderTopWidth: 1, borderColor: '#ccc' },
-  controls: { flexDirection: 'row', justifyContent: 'space-around' },
+  container: {
+    padding: 10,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: '#ccc',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  info: { flex: 1, marginRight: 10 },
+  title: { fontWeight: 'bold' },
+  artist: { color: '#666', fontSize: 12 },
+  controls: { minWidth: 60 },
 });
 
 export default PlayerController;
