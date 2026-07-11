@@ -1,16 +1,26 @@
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import TrackPlayer, { Capability } from 'react-native-track-player';
 import AppNavigator from './src/navigation/AppNavigator';
 import PlayerController from './src/components/PlayerController';
 
 async function setupPlayer() {
-  await TrackPlayer.setupPlayer();
-  await TrackPlayer.updateOptions({
-    capabilities: [Capability.Play, Capability.Pause],
-  });
+  try {
+    await TrackPlayer.setupPlayer();
+    await TrackPlayer.updateOptions({
+      capabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,
+        Capability.SkipToPrevious,
+        Capability.Stop,
+      ],
+    });
+  } catch (e) {
+    console.error('Error setting up player:', e);
+  }
 }
 
 function App(): React.JSX.Element {
