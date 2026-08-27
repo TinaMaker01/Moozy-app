@@ -52,6 +52,8 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
       transparent
       animationType="slide"
       onRequestClose={onClose}
+      statusBarTranslucent
+      navigationBarTranslucent
     >
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.backdrop}>

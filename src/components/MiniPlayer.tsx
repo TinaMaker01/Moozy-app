@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   State,
   useActiveTrack,
@@ -25,6 +26,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const MiniPlayer: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const activeTrack = useActiveTrack();
   const playbackState = usePlaybackState();
   const { position, duration } = useProgress();
@@ -46,7 +48,7 @@ export const MiniPlayer: React.FC = () => {
     <TouchableOpacity
       activeOpacity={0.92}
       onPress={() => navigation.navigate('Player')}
-      style={styles.wrapper}
+      style={[styles.wrapper, { marginBottom: insets.bottom + 8 }]}
     >
       {/* Top progress line */}
       <View style={styles.progressBarBackground}>
@@ -108,7 +110,8 @@ export const MiniPlayer: React.FC = () => {
 const styles = StyleSheet.create({
   wrapper: {
     marginHorizontal: 12,
-    marginBottom: 8,
+    // marginBottom is set inline (insets.bottom + 8) to clear the transparent
+    // edge-to-edge gesture/nav bar — see the JSX usage above.
     borderRadius: borderRadius.lg,
     backgroundColor: colors.playerBarBg,
     borderWidth: 1,

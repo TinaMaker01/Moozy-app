@@ -32,11 +32,7 @@ function App(): React.JSX.Element {
 
   return (
     <SafeAreaProvider>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={colors.background}
-        translucent={false}
-      />
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} translucent />
       <NavigationContainer theme={MoozyDarkNavTheme}>
         <View style={styles.container}>
           <AppNavigator />

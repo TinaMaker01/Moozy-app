@@ -43,6 +43,8 @@ export const SleepTimerModal: React.FC<Props> = ({ visible, onClose }) => {
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      statusBarTranslucent
+      navigationBarTranslucent
     >
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.backdrop}>

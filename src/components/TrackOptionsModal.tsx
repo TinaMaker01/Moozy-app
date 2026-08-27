@@ -70,6 +70,8 @@ export const TrackOptionsModal: React.FC<Props> = ({
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      statusBarTranslucent
+      navigationBarTranslucent
     >
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.backdrop}>
