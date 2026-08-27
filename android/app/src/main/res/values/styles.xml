@@ -1,9 +1,4 @@
 <resources>
-
-    <!-- Base application theme. -->
-    <!-- Edge-to-edge is enforced by the system on Android 15+ (targetSdk 35),
-         so we inherit from react-native-edge-to-edge's theme instead of
-         Theme.AppCompat.DayNight.NoActionBar directly. -->
     <style name="AppTheme" parent="Theme.EdgeToEdge">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
@@ -11,4 +6,9 @@
         <item name="enforceNavigationBarContrast">false</item>
     </style>
 
+    <style name="BootTheme" parent="Theme.BootSplash">
+        <item name="bootSplashBackground">@color/bootsplash_background</item>
+        <item name="bootSplashLogo">@drawable/bootsplash_logo</item>
+        <item name="postBootSplashTheme">@style/AppTheme</item>
+    </style>
 </resources>

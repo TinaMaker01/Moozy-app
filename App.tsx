@@ -1,8 +1,10 @@
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SystemBars } from 'react-native-edge-to-edge';
+import BootSplash from 'react-native-bootsplash';
 import AppNavigator from './src/navigation/AppNavigator';
 import { MiniPlayer } from './src/components/MiniPlayer';
 import { setupPlayer } from './src/services/audioService';
@@ -26,13 +28,19 @@ function App(): React.JSX.Element {
     async function init() {
       await setupPlayer();
       await useMusicStore.getState().initStore();
+      // Keep the native splash on screen until the player & store are ready,
+      // then fade it out instead of an abrupt cut / white flash.
+      await BootSplash.hide({ fade: true });
     }
     init();
   }, []);
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} translucent />
+      {/* Content now draws edge-to-edge; SystemBars only tints the icons/content
+          of the status & nav bars (mandatory replacement for <StatusBar> since
+          Android 15 deprecates its window-inset APIs). */}
+      <SystemBars style="light" />
       <NavigationContainer theme={MoozyDarkNavTheme}>
         <View style={styles.container}>
           <AppNavigator />
