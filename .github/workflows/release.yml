@@ -6,6 +6,12 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# Needed so softprops/action-gh-release can create the Release and upload the
+# APK asset — repos with the (now-default) read-only GITHUB_TOKEN policy
+# otherwise fail with "Resource not accessible by integration".
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Android Release APK
