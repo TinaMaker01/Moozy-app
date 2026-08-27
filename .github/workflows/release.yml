@@ -39,11 +39,40 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Derive version from tag
+        id: version
+        run: |
+          REF="${{ github.ref_name }}"
+          if [[ "$REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION_NAME="${REF#v}"
+          else
+            # Manual workflow_dispatch run (no version tag) — mark it clearly as non-release.
+            VERSION_NAME="0.0.0-dev.${{ github.run_number }}"
+          fi
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Decode release keystore
+        working-directory: android/app
+        run: echo "${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+
+      - name: Write keystore.properties
+        working-directory: android
+        run: |
+          cat > keystore.properties <<EOF
+          storeFile=release.keystore
+          storePassword=${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+          EOF
+
       - name: Build Android Release APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease \
+            -PVERSION_NAME=${{ steps.version.outputs.version_name }} \
+            -PVERSION_CODE=${{ steps.version.outputs.version_code }}
 
       - name: Rename APK with version tag
         run: |
