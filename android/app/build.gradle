@@ -73,6 +73,19 @@ def enableProguardInReleaseBuilds = true
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 /**
+ * The React Native Gradle plugin only wires `reactNativeArchitectures` (from
+ * gradle.properties) into the packaged native libraries automatically when the New
+ * Architecture is enabled (see NdkConfiguratorUtils.configureReactNativeNdk, which
+ * early-returns on Old Arch). This project runs Old Arch, so it's set explicitly
+ * below via ndk.abiFilters — otherwise every architecture's .so files get bundled
+ * into the release APK regardless of what reactNativeArchitectures says.
+ */
+def reactNativeArchitectures() {
+    def value = project.getProperties().get("reactNativeArchitectures")
+    return value ? value.split(",") : ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
+}
+
+/**
  * Release signing is loaded from android/keystore.properties, which is gitignored.
  * Locally: copy your release keystore into android/app/ and create keystore.properties
  * (storeFile, storePassword, keyAlias, keyPassword) pointing to it.
@@ -100,6 +113,9 @@ android {
         // Overridden by CI via -PVERSION_CODE/-PVERSION_NAME, derived from the pushed git tag.
         versionCode project.hasProperty('VERSION_CODE') ? (project.property('VERSION_CODE') as Integer) : 1
         versionName project.hasProperty('VERSION_NAME') ? project.property('VERSION_NAME') : "1.0"
+        ndk {
+            abiFilters(*reactNativeArchitectures())
+        }
     }
     signingConfigs {
         debug {
