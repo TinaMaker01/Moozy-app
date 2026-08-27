@@ -39,15 +39,15 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
-      - name: Rename APK to moozy.apk
+      - name: Rename APK with version tag
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk moozy.apk
+          cp android/app/build/outputs/apk/release/app-release.apk "moozy-${{ github.ref_name }}.apk"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: moozy.apk
-          path: moozy.apk
+          name: moozy-${{ github.ref_name }}.apk
+          path: moozy-${{ github.ref_name }}.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -58,6 +58,6 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: |
-            moozy.apk
+            moozy-${{ github.ref_name }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
