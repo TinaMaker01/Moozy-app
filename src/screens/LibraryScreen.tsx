@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -26,8 +26,8 @@ import { useMusicStore } from '../store/useMusicStore';
 import { Track } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
 import { MusicListItem } from '../components/MusicListItem';
-import { scanLocalMusicFiles } from '../services/localMusicScanner';
 import { TrackOptionsModal } from '../components/TrackOptionsModal';
+import { useLibraryScan } from '../hooks/useLibraryScan';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type LibraryTab = 'tracks' | 'artists' | 'albums' | 'playlists' | 'favorites';
@@ -37,78 +37,70 @@ export const LibraryScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [activeTab, setActiveTab] = useState<LibraryTab>('tracks');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
   const [selectedOptionTrack, setSelectedOptionTrack] = useState<Track | null>(null);
+  const { isScanning, scan } = useLibraryScan();
 
-  const {
-    tracks,
-    currentTrack,
-    favorites,
-    playlists,
-    playTrack,
-    setTracks,
-  } = useMusicStore();
-
-  const handleScan = async () => {
-    setIsScanning(true);
-    try {
-      const localSongs = await scanLocalMusicFiles();
-      if (localSongs.length > 0) {
-        const existingIds = new Set(tracks.map((t) => t.id));
-        const combined = [
-          ...tracks,
-          ...localSongs.filter((s) => !existingIds.has(s.id)),
-        ];
-        setTracks(combined);
-      }
-    } finally {
-      setIsScanning(false);
-    }
-  };
+  // Selectors: subscribe only to the slices this screen actually reads, so it
+  // doesn't re-render (and re-render every row of the track list) on unrelated
+  // store changes like queue reordering or playback progress.
+  const tracks = useMusicStore((s) => s.tracks);
+  const currentTrack = useMusicStore((s) => s.currentTrack);
+  const favorites = useMusicStore((s) => s.favorites);
+  const playlists = useMusicStore((s) => s.playlists);
+  const playTrack = useMusicStore((s) => s.playTrack);
 
   // Filter based on search query
   const query = searchQuery.trim().toLowerCase();
-  const filteredTracks = tracks.filter((t) => {
+  const filteredTracks = useMemo(() => {
     if (!query) {
-      return true;
+      return tracks;
     }
-    return (
-      t.title.toLowerCase().includes(query) ||
-      t.artist.toLowerCase().includes(query) ||
-      (t.album && t.album.toLowerCase().includes(query))
+    return tracks.filter(
+      (t) =>
+        t.title.toLowerCase().includes(query) ||
+        t.artist.toLowerCase().includes(query) ||
+        (t.album && t.album.toLowerCase().includes(query))
     );
-  });
+  }, [tracks, query]);
 
-  const favoriteTracks = filteredTracks.filter((t) => favorites.includes(t.id));
+  const favoriteTracks = useMemo(
+    () => filteredTracks.filter((t) => favorites.includes(t.id)),
+    [filteredTracks, favorites]
+  );
 
-  // Extract unique artists
-  const artistsMap = new Map<string, Track[]>();
-  tracks.forEach((t) => {
-    const list = artistsMap.get(t.artist) || [];
-    list.push(t);
-    artistsMap.set(t.artist, list);
-  });
-  const artistsList = Array.from(artistsMap.entries()).map(([artist, trks]) => ({
-    artist,
-    count: trks.length,
-    tracks: trks,
-  }));
+  // Extract unique artists — only recomputed when the track list itself changes,
+  // not on every keystroke in the search box or tab switch.
+  const artistsList = useMemo(() => {
+    const artistsMap = new Map<string, Track[]>();
+    tracks.forEach((t) => {
+      const list = artistsMap.get(t.artist) || [];
+      list.push(t);
+      artistsMap.set(t.artist, list);
+    });
+    return Array.from(artistsMap.entries()).map(([artist, trks]) => ({
+      artist,
+      count: trks.length,
+      tracks: trks,
+    }));
+  }, [tracks]);
 
-  // Extract unique albums
-  const albumsMap = new Map<string, Track[]>();
-  tracks.forEach((t) => {
-    const albumName = t.album || 'Sans Album';
-    const list = albumsMap.get(albumName) || [];
-    list.push(t);
-    albumsMap.set(albumName, list);
-  });
-  const albumsList = Array.from(albumsMap.entries()).map(([album, trks]) => ({
-    album,
-    artist: trks[0].artist,
-    count: trks.length,
-    artwork: trks[0].artwork,
-    tracks: trks,
-  }));
+  // Extract unique albums — same rationale as artistsList above.
+  const albumsList = useMemo(() => {
+    const albumsMap = new Map<string, Track[]>();
+    tracks.forEach((t) => {
+      const albumName = t.album || 'Sans Album';
+      const list = albumsMap.get(albumName) || [];
+      list.push(t);
+      albumsMap.set(albumName, list);
+    });
+    return Array.from(albumsMap.entries()).map(([album, trks]) => ({
+      album,
+      artist: trks[0].artist,
+      count: trks.length,
+      artwork: trks[0].artwork,
+      tracks: trks,
+    }));
+  }, [tracks]);
 
   const renderContent = () => {
     if (activeTab === 'tracks') {
@@ -121,7 +113,7 @@ export const LibraryScreen: React.FC = () => {
             <View style={styles.emptyState}>
               <Music size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>Aucun morceau trouvé</Text>
-              <TouchableOpacity style={styles.scanCta} onPress={handleScan}>
+              <TouchableOpacity style={styles.scanCta} onPress={scan}>
                 <FolderSync size={18} color="#FFF" />
                 <Text style={styles.scanCtaText}>Scanner mes fichiers audio</Text>
               </TouchableOpacity>
@@ -254,7 +246,7 @@ export const LibraryScreen: React.FC = () => {
         <Text style={styles.headerTitle}>Bibliothèque</Text>
         <TouchableOpacity
           style={styles.scanBtn}
-          onPress={handleScan}
+          onPress={scan}
           disabled={isScanning}
         >
           {isScanning ? (

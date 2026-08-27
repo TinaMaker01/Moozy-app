@@ -130,7 +130,9 @@ export async function scanLocalMusicFiles(): Promise<Track[]> {
               title,
               artist,
               album: 'Musique Locale',
-              duration: 180, // Default duration placeholder
+              // No real duration available without reading the file's audio tags —
+              // left unset (optional field) so the UI shows "--:--" instead of a
+              // fabricated value.
               artwork: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
               isLocal: true,
               isFavorite: false,

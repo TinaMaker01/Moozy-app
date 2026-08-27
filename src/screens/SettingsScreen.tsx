@@ -24,19 +24,19 @@ import {
 import { borderRadius, colors, shadows, typography } from '../theme';
 import { useMusicStore } from '../store/useMusicStore';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { scanLocalMusicFiles } from '../services/localMusicScanner';
 import { SleepTimerModal } from '../components/SleepTimerModal';
 import { RootStackParamList } from '../types/navigation';
+import { useLibraryScan } from '../hooks/useLibraryScan';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const SettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
-  const [isScanning, setIsScanning] = useState(false);
   const [sleepModalVisible, setSleepModalVisible] = useState(false);
+  const { isScanning, scan } = useLibraryScan();
 
-  const { tracks, setTracks } = useMusicStore();
+  const tracks = useMusicStore((s) => s.tracks);
   const {
     hapticFeedbackEnabled,
     highQualityAudio,
@@ -45,19 +45,12 @@ export const SettingsScreen: React.FC = () => {
   } = useSettingsStore();
 
   const handleManualScan = async () => {
-    setIsScanning(true);
     try {
-      const localSongs = await scanLocalMusicFiles();
-      if (localSongs.length > 0) {
-        const existingIds = new Set(tracks.map((t) => t.id));
-        const newTracks = [
-          ...tracks,
-          ...localSongs.filter((s) => !existingIds.has(s.id)),
-        ];
-        setTracks(newTracks);
+      const { found } = await scan();
+      if (found.length > 0) {
         Alert.alert(
           'Scan Terminé',
-          `${localSongs.length} morceau(x) trouvé(s) sur votre appareil.`
+          `${found.length} morceau(x) trouvé(s) sur votre appareil.`
         );
       } else {
         Alert.alert(
@@ -67,8 +60,6 @@ export const SettingsScreen: React.FC = () => {
       }
     } catch (e) {
       Alert.alert('Erreur', 'Impossible de scanner les fichiers.');
-    } finally {
-      setIsScanning(false);
     }
   };
 

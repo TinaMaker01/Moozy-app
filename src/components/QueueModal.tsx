@@ -27,14 +27,12 @@ interface Props {
 }
 
 export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
-  const {
-    queue,
-    currentTrack,
-    playTrack,
-    moveQueueItem,
-    removeFromQueue,
-    clearQueue,
-  } = useMusicStore();
+  const queue = useMusicStore((s) => s.queue);
+  const currentTrack = useMusicStore((s) => s.currentTrack);
+  const playTrack = useMusicStore((s) => s.playTrack);
+  const moveQueueItem = useMusicStore((s) => s.moveQueueItem);
+  const removeFromQueue = useMusicStore((s) => s.removeFromQueue);
+  const clearQueue = useMusicStore((s) => s.clearQueue);
 
   const currentIdx = currentTrack
     ? queue.findIndex((t) => t.id === currentTrack.id)

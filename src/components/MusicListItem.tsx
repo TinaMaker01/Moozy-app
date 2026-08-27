@@ -29,14 +29,15 @@ function formatDuration(seconds?: number): string {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
-export const MusicListItem: React.FC<Props> = ({
+const MusicListItemComponent: React.FC<Props> = ({
   track,
   isActive = false,
   isPlaying = false,
   onPress,
   onOptionsPress,
 }) => {
-  const { favorites, toggleFavorite } = useMusicStore();
+  const favorites = useMusicStore((s) => s.favorites);
+  const toggleFavorite = useMusicStore((s) => s.toggleFavorite);
   const isFavorite = favorites.includes(track.id);
 
   const artworkUri =
@@ -175,5 +176,11 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 });
+
+// Memoized: this renders once per row in potentially long FlatLists (library,
+// playlists, favorites). Combined with the store selectors above, a row now
+// only re-renders when its own props or the favorites list actually change —
+// not on every unrelated store update (queue, playback progress, etc.).
+export const MusicListItem = React.memo(MusicListItemComponent);
 
 export default MusicListItem;

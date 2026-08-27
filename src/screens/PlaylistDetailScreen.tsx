@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   FlatList,
   Image,
@@ -23,9 +23,14 @@ export const PlaylistDetailScreen: React.FC = () => {
   const route = useRoute<PlaylistDetailRouteProp>();
   const { playlist } = route.params;
 
-  const { tracks, currentTrack, playTrack } = useMusicStore();
+  const tracks = useMusicStore((s) => s.tracks);
+  const currentTrack = useMusicStore((s) => s.currentTrack);
+  const playTrack = useMusicStore((s) => s.playTrack);
 
-  const playlistTracks = tracks.filter((t) => playlist.trackIds.includes(t.id));
+  const playlistTracks = useMemo(
+    () => tracks.filter((t) => playlist.trackIds.includes(t.id)),
+    [tracks, playlist.trackIds]
+  );
 
   const handlePlayAll = () => {
     if (playlistTracks.length > 0) {

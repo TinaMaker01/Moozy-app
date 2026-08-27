@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dimensions,
   StyleSheet,
@@ -67,18 +67,21 @@ export const PlayerScreen: React.FC = () => {
   const playbackState = usePlaybackState();
   const { position, duration } = useProgress();
 
-  const {
-    currentTrack,
-    favorites,
-    isShuffle,
-    repeatMode,
-    toggleFavorite,
-    toggleShuffle,
-    cycleRepeatMode,
-  } = useMusicStore();
+  const currentTrack = useMusicStore((s) => s.currentTrack);
+  const favorites = useMusicStore((s) => s.favorites);
+  const isShuffle = useMusicStore((s) => s.isShuffle);
+  const repeatMode = useMusicStore((s) => s.repeatMode);
+  const toggleFavorite = useMusicStore((s) => s.toggleFavorite);
+  const toggleShuffle = useMusicStore((s) => s.toggleShuffle);
+  const cycleRepeatMode = useMusicStore((s) => s.cycleRepeatMode);
 
   const track = activeTrack || currentTrack;
   const isPlaying = playbackState.state === State.Playing;
+  // Computed before the early return below so hook order stays stable across renders.
+  const palette = useMemo(
+    () => getTrackPalette(track?.title || track?.id || 'Moozy'),
+    [track?.title, track?.id]
+  );
 
   if (!track) {
     return (
@@ -91,7 +94,6 @@ export const PlayerScreen: React.FC = () => {
   const isFavorite = favorites.includes(track.id);
   const currentPos = isSliding ? slidingValue : position;
   const effectiveDuration = duration > 0 ? duration : (track.duration || 180);
-  const palette = getTrackPalette(track.title || track.id);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom + 12 }]}>

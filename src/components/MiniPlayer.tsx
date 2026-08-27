@@ -30,7 +30,7 @@ export const MiniPlayer: React.FC = () => {
   const activeTrack = useActiveTrack();
   const playbackState = usePlaybackState();
   const { position, duration } = useProgress();
-  const { currentTrack } = useMusicStore();
+  const currentTrack = useMusicStore((s) => s.currentTrack);
 
   const track = activeTrack || currentTrack;
   const isPlaying = playbackState.state === State.Playing;

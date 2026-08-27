@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -24,9 +24,9 @@ import { borderRadius, colors, shadows, typography } from '../theme';
 import { useMusicStore } from '../store/useMusicStore';
 import { MoodCategory } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
-import { scanLocalMusicFiles } from '../services/localMusicScanner';
 import { SleepTimerModal } from '../components/SleepTimerModal';
 import { getTrackPalette } from '../utils/artworkColors';
+import { useLibraryScan } from '../hooks/useLibraryScan';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -42,20 +42,23 @@ export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const [sleepModalVisible, setSleepModalVisible] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
+  const { isScanning, scan } = useLibraryScan();
 
-  const {
-    tracks,
-    currentTrack,
-    playlists,
-    recentlyPlayed,
-    selectedMood,
-    setSelectedMood,
-    playTrack,
-    setTracks,
-  } = useMusicStore();
+  // Selectors: each hook call subscribes only to the slice it reads, so this
+  // screen re-renders when that slice changes — not on every store update
+  // (e.g. queue/progress changes while a track is playing).
+  const tracks = useMusicStore((s) => s.tracks);
+  const currentTrack = useMusicStore((s) => s.currentTrack);
+  const playlists = useMusicStore((s) => s.playlists);
+  const recentlyPlayed = useMusicStore((s) => s.recentlyPlayed);
+  const selectedMood = useMusicStore((s) => s.selectedMood);
+  const setSelectedMood = useMusicStore((s) => s.setSelectedMood);
+  const playTrack = useMusicStore((s) => s.playTrack);
 
-  const activePalette = getTrackPalette(currentTrack?.title || 'Moozy');
+  const activePalette = useMemo(
+    () => getTrackPalette(currentTrack?.title || 'Moozy'),
+    [currentTrack?.title]
+  );
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -68,39 +71,23 @@ export const HomeScreen: React.FC = () => {
     return 'Bonsoir 🌙';
   };
 
-  const handleScanDevice = async () => {
-    setIsScanning(true);
-    try {
-      const localSongs = await scanLocalMusicFiles();
-      if (localSongs.length > 0) {
-        // Merge with existing
-        const existingIds = new Set(tracks.map((t) => t.id));
-        const newTracks = [
-          ...tracks,
-          ...localSongs.filter((s) => !existingIds.has(s.id)),
-        ];
-        setTracks(newTracks);
+  const filteredTracks = useMemo(() => {
+    return tracks.filter((t) => {
+      if (selectedMood === 'all') {
+        return true;
       }
-    } finally {
-      setIsScanning(false);
-    }
-  };
-
-  const filteredTracks = tracks.filter((t) => {
-    if (selectedMood === 'all') {
+      if (selectedMood === 'chill') {
+        return t.genre?.toLowerCase().includes('lo-fi') || t.genre?.toLowerCase().includes('ambient');
+      }
+      if (selectedMood === 'energy') {
+        return t.genre?.toLowerCase().includes('edm') || t.genre?.toLowerCase().includes('cyber');
+      }
+      if (selectedMood === 'focus') {
+        return t.genre?.toLowerCase().includes('ambient') || t.genre?.toLowerCase().includes('focus');
+      }
       return true;
-    }
-    if (selectedMood === 'chill') {
-      return t.genre?.toLowerCase().includes('lo-fi') || t.genre?.toLowerCase().includes('ambient');
-    }
-    if (selectedMood === 'energy') {
-      return t.genre?.toLowerCase().includes('edm') || t.genre?.toLowerCase().includes('cyber');
-    }
-    if (selectedMood === 'focus') {
-      return t.genre?.toLowerCase().includes('ambient') || t.genre?.toLowerCase().includes('focus');
-    }
-    return true;
-  });
+    });
+  }, [tracks, selectedMood]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -131,7 +118,7 @@ export const HomeScreen: React.FC = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconBtn}
-              onPress={handleScanDevice}
+              onPress={scan}
               disabled={isScanning}
             >
               <FolderSync

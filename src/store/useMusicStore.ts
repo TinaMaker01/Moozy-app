@@ -6,6 +6,7 @@ import { AudioService } from '../services/audioService';
 const FAVORITES_STORAGE_KEY = '@moozy_favorites_v1';
 const PLAYLISTS_STORAGE_KEY = '@moozy_playlists_v1';
 const HISTORY_STORAGE_KEY = '@moozy_history_v1';
+const TRACKS_STORAGE_KEY = '@moozy_tracks_v1';
 
 export const INITIAL_DEMO_TRACKS: Track[] = [
   {
@@ -132,10 +133,11 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
 
   initStore: async () => {
     try {
-      const [favsJson, plsJson, histJson] = await Promise.all([
+      const [favsJson, plsJson, histJson, tracksJson] = await Promise.all([
         AsyncStorage.getItem(FAVORITES_STORAGE_KEY),
         AsyncStorage.getItem(PLAYLISTS_STORAGE_KEY),
         AsyncStorage.getItem(HISTORY_STORAGE_KEY),
+        AsyncStorage.getItem(TRACKS_STORAGE_KEY),
       ]);
 
       if (favsJson) {
@@ -147,12 +149,20 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
       if (histJson) {
         set({ recentlyPlayed: JSON.parse(histJson) });
       }
+      if (tracksJson) {
+        set({ tracks: JSON.parse(tracksJson) });
+      }
     } catch (e) {
       console.warn('Failed to load persisted music data:', e);
     }
   },
 
-  setTracks: (tracks) => set({ tracks }),
+  setTracks: (tracks) => {
+    set({ tracks });
+    // Persist so a locally-scanned library survives an app restart instead of
+    // requiring the user to rescan every time.
+    AsyncStorage.setItem(TRACKS_STORAGE_KEY, JSON.stringify(tracks)).catch(console.warn);
+  },
 
   setCurrentTrack: (track) => set({ currentTrack: track }),
 

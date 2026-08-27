@@ -30,13 +30,11 @@ export const TrackOptionsModal: React.FC<Props> = ({
   visible,
   onClose,
 }) => {
-  const {
-    favorites,
-    toggleFavorite,
-    playNextTrack,
-    addToQueue,
-    playTrack,
-  } = useMusicStore();
+  const favorites = useMusicStore((s) => s.favorites);
+  const toggleFavorite = useMusicStore((s) => s.toggleFavorite);
+  const playNextTrack = useMusicStore((s) => s.playNextTrack);
+  const addToQueue = useMusicStore((s) => s.addToQueue);
+  const playTrack = useMusicStore((s) => s.playTrack);
 
   if (!track) {
     return null;
