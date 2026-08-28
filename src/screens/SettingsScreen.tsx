@@ -201,7 +201,7 @@ export const SettingsScreen: React.FC = () => {
         <View style={styles.sectionCard}>
           <TouchableOpacity
             style={styles.settingItem}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Equalizer' })}
+            onPress={() => navigation.navigate('Equalizer')}
           >
             <View style={styles.settingIconWrapper}>
               <Sliders size={20} color={colors.primaryLight} />

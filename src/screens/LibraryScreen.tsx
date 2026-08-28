@@ -170,7 +170,7 @@ export const LibraryScreen: React.FC = () => {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.cardItem}
-              onPress={() => playTrack(item.tracks[0], item.tracks)}
+              onPress={() => navigation.navigate('ArtistDetail', { artistName: item.artist })}
             >
               <View style={styles.artistAvatar}>
                 <Mic size={24} color={colors.primaryLight} />
@@ -221,7 +221,7 @@ export const LibraryScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.cardItem}
               onPress={() =>
-                navigation.navigate('PlaylistDetail', { playlist: item })
+                navigation.navigate('PlaylistDetail', { playlistId: item.id })
               }
             >
               <View style={styles.playlistIcon}>

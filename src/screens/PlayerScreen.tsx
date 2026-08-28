@@ -288,9 +288,7 @@ export const PlayerScreen: React.FC = () => {
       <View style={styles.bottomTools}>
         <TouchableOpacity
           style={styles.toolBtn}
-          onPress={() => {
-            navigation.navigate('MainTabs', { screen: 'Equalizer' });
-          }}
+          onPress={() => navigation.navigate('Equalizer')}
         >
           <Sliders size={18} color={colors.textSecondary} />
           <Text style={styles.toolText}>Égaliseur</Text>

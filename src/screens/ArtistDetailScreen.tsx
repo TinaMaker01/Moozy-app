@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   FlatList,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -9,66 +8,43 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { ChevronLeft, Play, Shuffle } from 'lucide-react-native';
+import { ChevronLeft, Mic, Play, Shuffle } from 'lucide-react-native';
 import { borderRadius, ColorTokens, shadows, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { RootStackParamList } from '../types/navigation';
 import { MusicListItem } from '../components/MusicListItem';
-import { EmptyState } from '../components/states/EmptyState';
 
-type PlaylistDetailRouteProp = RouteProp<RootStackParamList, 'PlaylistDetail'>;
+type ArtistDetailRouteProp = RouteProp<RootStackParamList, 'ArtistDetail'>;
 
-export const PlaylistDetailScreen: React.FC = () => {
+export const ArtistDetailScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const route = useRoute<PlaylistDetailRouteProp>();
-  const { playlistId } = route.params;
+  const route = useRoute<ArtistDetailRouteProp>();
+  const { artistName } = route.params;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const tracks = useMusicStore((s) => s.tracks);
   const currentTrack = useMusicStore((s) => s.currentTrack);
   const playTrack = useMusicStore((s) => s.playTrack);
-  // Looked up live by id (rather than passed as a route param snapshot) so
-  // a rename or a track added/removed elsewhere shows up immediately here.
-  const playlist = useMusicStore((s) => s.playlists.find((p) => p.id === playlistId));
 
-  const playlistTracks = useMemo(
-    () => (playlist ? tracks.filter((t) => playlist.trackIds.includes(t.id)) : []),
-    [tracks, playlist]
+  // Live-filtered from the store by name, same reasoning as PlaylistDetail:
+  // stays correct if the library is rescanned while this screen is open.
+  const artistTracks = useMemo(
+    () => tracks.filter((t) => t.artist === artistName),
+    [tracks, artistName]
   );
 
-  if (!playlist) {
-    return (
-      <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => navigation.goBack()}
-          >
-            <ChevronLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Playlist</Text>
-          <View style={styles.placeholderBtn} />
-        </View>
-        <EmptyState
-          title="Playlist introuvable"
-          message="Elle a peut-être été supprimée."
-        />
-      </View>
-    );
-  }
-
   const handlePlayAll = () => {
-    if (playlistTracks.length > 0) {
-      playTrack(playlistTracks[0], playlistTracks);
+    if (artistTracks.length > 0) {
+      playTrack(artistTracks[0], artistTracks);
     }
   };
 
   const handleShufflePlay = () => {
-    if (playlistTracks.length > 0) {
-      const shuffled = [...playlistTracks].sort(() => Math.random() - 0.5);
+    if (artistTracks.length > 0) {
+      const shuffled = [...artistTracks].sort(() => Math.random() - 0.5);
       playTrack(shuffled[0], shuffled);
     }
   };
@@ -84,31 +60,23 @@ export const PlaylistDetailScreen: React.FC = () => {
           <ChevronLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
-          {playlist.name}
+          {artistName}
         </Text>
         <View style={styles.placeholderBtn} />
       </View>
 
       <FlatList
-        data={playlistTracks}
+        data={artistTracks}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View style={styles.heroSection}>
-            <Image
-              source={{
-                uri:
-                  playlist.artwork ||
-                  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-              }}
-              style={styles.artwork}
-            />
-            <Text style={styles.playlistTitle}>{playlist.name}</Text>
-            {playlist.description && (
-              <Text style={styles.playlistDesc}>{playlist.description}</Text>
-            )}
+            <View style={styles.avatar}>
+              <Mic size={40} color={colors.primaryLight} />
+            </View>
+            <Text style={styles.artistTitle}>{artistName}</Text>
             <Text style={styles.trackCount}>
-              {playlistTracks.length} morceau(x)
+              {artistTracks.length} morceau(x)
             </Text>
 
             {/* Action Buttons */}
@@ -133,14 +101,14 @@ export const PlaylistDetailScreen: React.FC = () => {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Aucun morceau dans cette playlist.</Text>
+            <Text style={styles.emptyText}>Aucun morceau de cet artiste.</Text>
           </View>
         }
         renderItem={({ item }) => (
           <MusicListItem
             track={item}
             isActive={currentTrack?.id === item.id}
-            onPress={() => playTrack(item, playlistTracks)}
+            onPress={() => playTrack(item, artistTracks)}
           />
         )}
       />
@@ -187,25 +155,20 @@ function createStyles(colors: ColorTokens) {
       paddingVertical: 20,
       paddingHorizontal: 24,
     },
-    artwork: {
-      width: 180,
-      height: 180,
-      borderRadius: borderRadius.xl,
-      backgroundColor: colors.surfaceCard,
+    avatar: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: 'rgba(139, 92, 246, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
       marginBottom: 16,
-      ...shadows.soft,
     },
-    playlistTitle: {
+    artistTitle: {
       ...typography.hero,
       color: colors.text,
       fontSize: 22,
       textAlign: 'center',
-    },
-    playlistDesc: {
-      ...typography.bodySmall,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 4,
     },
     trackCount: {
       ...typography.caption,
@@ -262,4 +225,4 @@ function createStyles(colors: ColorTokens) {
   });
 }
 
-export default PlaylistDetailScreen;
+export default ArtistDetailScreen;

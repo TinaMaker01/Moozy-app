@@ -7,8 +7,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { AudioSlider } from '../components/AudioSlider';
-import { RotateCcw, Sliders, Volume2, Waves } from 'lucide-react-native';
+import { ChevronLeft, RotateCcw, Sliders, Volume2, Waves } from 'lucide-react-native';
 import { borderRadius, ColorTokens, shadows, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -35,6 +36,7 @@ const BANDS: { key: keyof EqualizerSettings['bands']; label: string }[] = [
 
 export const EqualizerScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const {
@@ -53,7 +55,13 @@ export const EqualizerScreen: React.FC = () => {
       >
         {/* Top Header */}
         <View style={styles.header}>
-          <View>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+          >
+            <ChevronLeft size={22} color={colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerTitles}>
             <Text style={styles.headerTitle}>Égaliseur Audio</Text>
             <Text style={styles.headerSubtitle}>
               Sculptez le son selon vos préférences
@@ -209,19 +217,33 @@ function createStyles(colors: ColorTokens) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 20,
+      paddingHorizontal: 16,
       paddingTop: 12,
       paddingBottom: 16,
+      gap: 12,
+    },
+    headerTitles: {
+      flex: 1,
     },
     headerTitle: {
       ...typography.hero,
       color: colors.text,
-      fontSize: 26,
+      fontSize: 22,
     },
     headerSubtitle: {
       ...typography.bodySmall,
       color: colors.textSecondary,
       marginTop: 2,
+    },
+    backBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: colors.surfaceCard,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
     },
     resetBtn: {
       width: 38,

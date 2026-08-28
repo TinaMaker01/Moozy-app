@@ -262,7 +262,7 @@ export const HomeScreen: React.FC = () => {
               activeOpacity={0.8}
               style={styles.playlistCard}
               onPress={() =>
-                navigation.navigate('PlaylistDetail', { playlist: item })
+                navigation.navigate('PlaylistDetail', { playlistId: item.id })
               }
             >
               <Image
