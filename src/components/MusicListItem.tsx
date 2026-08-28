@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Image,
   StyleSheet,
@@ -7,7 +7,8 @@ import {
   View,
 } from 'react-native';
 import { Heart, MoreVertical } from 'lucide-react-native';
-import { borderRadius, colors, typography } from '../theme';
+import { borderRadius, ColorTokens, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { Track } from '../types/music';
 import { useMusicStore } from '../store/useMusicStore';
 import { VisualizerBar } from './VisualizerBar';
@@ -36,6 +37,8 @@ const MusicListItemComponent: React.FC<Props> = ({
   onPress,
   onOptionsPress,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const favorites = useMusicStore((s) => s.favorites);
   const toggleFavorite = useMusicStore((s) => s.toggleFavorite);
   const isFavorite = favorites.includes(track.id);
@@ -107,75 +110,77 @@ const MusicListItemComponent: React.FC<Props> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: borderRadius.md,
-    marginHorizontal: 8,
-    marginVertical: 2,
-  },
-  activeContainer: {
-    backgroundColor: colors.activeTrackBg,
-    borderWidth: 1,
-    borderColor: colors.activeTrackBorder,
-  },
-  artworkContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.surfaceCard,
-  },
-  artwork: {
-    width: '100%',
-    height: '100%',
-  },
-  playingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(139, 92, 246, 0.65)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoContainer: {
-    flex: 1,
-    marginLeft: 14,
-    marginRight: 8,
-  },
-  title: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  activeTitle: {
-    color: colors.primaryLight,
-    fontWeight: '700',
-  },
-  artist: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginTop: 3,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  duration: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-  heartButton: {
-    padding: 4,
-  },
-  moreButton: {
-    padding: 4,
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: borderRadius.md,
+      marginHorizontal: 8,
+      marginVertical: 2,
+    },
+    activeContainer: {
+      backgroundColor: colors.activeTrackBg,
+      borderWidth: 1,
+      borderColor: colors.activeTrackBorder,
+    },
+    artworkContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: borderRadius.md,
+      overflow: 'hidden',
+      backgroundColor: colors.surfaceCard,
+    },
+    artwork: {
+      width: '100%',
+      height: '100%',
+    },
+    playingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(139, 92, 246, 0.65)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    infoContainer: {
+      flex: 1,
+      marginLeft: 14,
+      marginRight: 8,
+    },
+    title: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    activeTitle: {
+      color: colors.primaryLight,
+      fontWeight: '700',
+    },
+    artist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      marginTop: 3,
+    },
+    actionsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    duration: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      fontSize: 12,
+    },
+    heartButton: {
+      padding: 4,
+    },
+    moreButton: {
+      padding: 4,
+    },
+  });
+}
 
 // Memoized: this renders once per row in potentially long FlatLists (library,
 // playlists, favorites). Combined with the store selectors above, a row now

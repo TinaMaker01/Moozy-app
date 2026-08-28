@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,7 +8,8 @@ import {
   Settings,
   Sliders,
 } from 'lucide-react-native';
-import { colors, typography } from '../theme';
+import { ColorTokens, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { RootStackParamList, RootTabParamList } from '../types/navigation';
 import HomeScreen from '../screens/HomeScreen';
 import LibraryScreen from '../screens/LibraryScreen';
@@ -37,6 +38,9 @@ function SettingsTabIcon({ color, size }: { color: string; size: number }) {
 }
 
 const TabNavigator = () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -106,20 +110,22 @@ export const AppNavigator = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.tabBarBg,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderGlass,
-    height: 60,
-    paddingBottom: 8,
-    paddingTop: 6,
-  },
-  tabBarLabel: {
-    ...typography.badge,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    tabBar: {
+      backgroundColor: colors.tabBarBg,
+      borderTopWidth: 1,
+      borderTopColor: colors.borderGlass,
+      height: 60,
+      paddingBottom: 8,
+      paddingTop: 6,
+    },
+    tabBarLabel: {
+      ...typography.badge,
+      fontSize: 11,
+      fontWeight: '600',
+    },
+  });
+}
 
 export default AppNavigator;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Image,
   StyleSheet,
@@ -16,7 +16,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Pause, Play, SkipForward } from 'lucide-react-native';
-import { borderRadius, colors, shadows, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { AudioService } from '../services/audioService';
 import { useMusicStore } from '../store/useMusicStore';
 import { RootStackParamList } from '../types/navigation';
@@ -27,6 +28,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export const MiniPlayer: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const activeTrack = useActiveTrack();
   const playbackState = usePlaybackState();
   const { position, duration } = useProgress();
@@ -107,83 +110,85 @@ export const MiniPlayer: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  wrapper: {
-    marginHorizontal: 12,
-    // marginBottom is set inline (insets.bottom + 8) to clear the transparent
-    // edge-to-edge gesture/nav bar — see the JSX usage above.
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.playerBarBg,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-    overflow: 'hidden',
-    ...shadows.soft,
-  },
-  progressBarBackground: {
-    height: 2.5,
-    backgroundColor: colors.progressBarBg,
-    width: '100%',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-  },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  artworkContainer: {
-    position: 'relative',
-    width: 46,
-    height: 46,
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-  },
-  artwork: {
-    width: '100%',
-    height: '100%',
-  },
-  visualizerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoContainer: {
-    flex: 1,
-    marginLeft: 12,
-    marginRight: 8,
-    justifyContent: 'center',
-  },
-  title: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  artist: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  controlsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  playButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.glow(colors.primaryGlow),
-  },
-  skipButton: {
-    padding: 6,
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    wrapper: {
+      marginHorizontal: 12,
+      // marginBottom is set inline (insets.bottom + 8) to clear the transparent
+      // edge-to-edge gesture/nav bar — see the JSX usage above.
+      borderRadius: borderRadius.lg,
+      backgroundColor: colors.playerBarBg,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      overflow: 'hidden',
+      ...shadows.soft,
+    },
+    progressBarBackground: {
+      height: 2.5,
+      backgroundColor: colors.progressBarBg,
+      width: '100%',
+    },
+    progressBarFill: {
+      height: '100%',
+      backgroundColor: colors.primary,
+    },
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+    },
+    artworkContainer: {
+      position: 'relative',
+      width: 46,
+      height: 46,
+      borderRadius: borderRadius.md,
+      overflow: 'hidden',
+    },
+    artwork: {
+      width: '100%',
+      height: '100%',
+    },
+    visualizerOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(0, 0, 0, 0.45)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    infoContainer: {
+      flex: 1,
+      marginLeft: 12,
+      marginRight: 8,
+      justifyContent: 'center',
+    },
+    title: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    artist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    controlsContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    playButton: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...shadows.glow(colors.primaryGlow),
+    },
+    skipButton: {
+      padding: 6,
+    },
+  });
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   FlatList,
   Image,
@@ -16,7 +16,8 @@ import {
   Trash2,
   X,
 } from 'lucide-react-native';
-import { borderRadius, colors, shadows, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { Track } from '../types/music';
 import { VisualizerBar } from './VisualizerBar';
@@ -27,6 +28,8 @@ interface Props {
 }
 
 export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const queue = useMusicStore((s) => s.queue);
   const currentTrack = useMusicStore((s) => s.currentTrack);
   const playTrack = useMusicStore((s) => s.playTrack);
@@ -195,172 +198,174 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'flex-end',
-  },
-  card: {
-    backgroundColor: colors.surfaceCard,
-    borderTopLeftRadius: borderRadius.xxl,
-    borderTopRightRadius: borderRadius.xxl,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    maxHeight: '82%',
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-    ...shadows.soft,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  title: {
-    ...typography.h2,
-    color: colors.text,
-    fontSize: 18,
-  },
-  countBadge: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  clearBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: borderRadius.sm,
-  },
-  clearBtnText: {
-    ...typography.badge,
-    color: colors.error,
-  },
-  closeBtn: {
-    padding: 4,
-  },
-  nowPlayingSection: {
-    marginBottom: 16,
-  },
-  sectionLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontSize: 11,
-    marginBottom: 8,
-  },
-  activeTrackCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.activeTrackBg,
-    padding: 12,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.activeTrackBorder,
-  },
-  activeThumb: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.sm,
-  },
-  activeInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  activeTitle: {
-    ...typography.bodyLarge,
-    color: colors.primaryLight,
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  activeArtist: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  upNextSection: {
-    flex: 1,
-    minHeight: 280,
-    paddingBottom: 24,
-  },
-  listContent: {
-    gap: 8,
-    paddingBottom: 32,
-  },
-  emptyContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  emptyText: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    textAlign: 'center',
-  },
-  queueItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  trackInfoPressable: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  queueThumb: {
-    width: 38,
-    height: 38,
-    borderRadius: borderRadius.sm,
-  },
-  queueInfo: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  queueTitle: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  queueArtist: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  itemControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  reorderBtn: {
-    padding: 6,
-  },
-  btnDisabled: {
-    opacity: 0.3,
-  },
-  removeBtn: {
-    padding: 6,
-    marginLeft: 4,
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      justifyContent: 'flex-end',
+    },
+    card: {
+      backgroundColor: colors.surfaceCard,
+      borderTopLeftRadius: borderRadius.xxl,
+      borderTopRightRadius: borderRadius.xxl,
+      paddingTop: 20,
+      paddingHorizontal: 20,
+      maxHeight: '82%',
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      ...shadows.soft,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    title: {
+      ...typography.h2,
+      color: colors.text,
+      fontSize: 18,
+    },
+    countBadge: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    clearBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: 'rgba(239, 68, 68, 0.15)',
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: borderRadius.sm,
+    },
+    clearBtnText: {
+      ...typography.badge,
+      color: colors.error,
+    },
+    closeBtn: {
+      padding: 4,
+    },
+    nowPlayingSection: {
+      marginBottom: 16,
+    },
+    sectionLabel: {
+      ...typography.caption,
+      color: colors.textMuted,
+      fontSize: 11,
+      marginBottom: 8,
+    },
+    activeTrackCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.activeTrackBg,
+      padding: 12,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: colors.activeTrackBorder,
+    },
+    activeThumb: {
+      width: 44,
+      height: 44,
+      borderRadius: borderRadius.sm,
+    },
+    activeInfo: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    activeTitle: {
+      ...typography.bodyLarge,
+      color: colors.primaryLight,
+      fontWeight: '700',
+      fontSize: 14,
+    },
+    activeArtist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    upNextSection: {
+      flex: 1,
+      minHeight: 280,
+      paddingBottom: 24,
+    },
+    listContent: {
+      gap: 8,
+      paddingBottom: 32,
+    },
+    emptyContainer: {
+      paddingVertical: 40,
+      alignItems: 'center',
+    },
+    emptyText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      textAlign: 'center',
+    },
+    queueItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    trackInfoPressable: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    queueThumb: {
+      width: 38,
+      height: 38,
+      borderRadius: borderRadius.sm,
+    },
+    queueInfo: {
+      flex: 1,
+      marginLeft: 10,
+    },
+    queueTitle: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    queueArtist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 11,
+      marginTop: 2,
+    },
+    itemControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    reorderBtn: {
+      padding: 6,
+    },
+    btnDisabled: {
+      opacity: 0.3,
+    },
+    removeBtn: {
+      padding: 6,
+      marginLeft: 4,
+    },
+  });
+}
 
 export default QueueModal;

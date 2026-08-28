@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
   isPlaying: boolean;
@@ -12,9 +12,11 @@ interface Props {
 export const VisualizerBar: React.FC<Props> = ({
   isPlaying,
   barCount = 4,
-  color = colors.primary,
+  color,
   maxHeight = 24,
 }) => {
+  const { colors } = useTheme();
+  const resolvedColor = color || colors.primary;
   const animatedValues = useRef<Animated.Value[]>(
     Array.from({ length: barCount }, () => new Animated.Value(0.3))
   ).current;
@@ -72,7 +74,7 @@ export const VisualizerBar: React.FC<Props> = ({
               styles.bar,
               {
                 height,
-                backgroundColor: color,
+                backgroundColor: resolvedColor,
               },
             ]}
           />

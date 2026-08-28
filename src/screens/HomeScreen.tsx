@@ -20,7 +20,8 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react-native';
-import { borderRadius, colors, shadows, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { MoodCategory } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
@@ -31,9 +32,9 @@ import { useLibraryScan } from '../hooks/useLibraryScan';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const MOODS: { id: MoodCategory; label: string; icon: any; color: string }[] = [
-  { id: 'all', label: 'Tous', icon: Sparkles, color: colors.primary },
-  { id: 'chill', label: 'Détente 🌙', icon: Moon, color: colors.secondary },
-  { id: 'energy', label: 'Énergie ⚡', icon: Zap, color: colors.accent },
+  { id: 'all', label: 'Tous', icon: Sparkles, color: '#8B5CF6' },
+  { id: 'chill', label: 'Détente 🌙', icon: Moon, color: '#06B6D4' },
+  { id: 'energy', label: 'Énergie ⚡', icon: Zap, color: '#EC4899' },
   { id: 'focus', label: 'Concentration 🎯', icon: Compass, color: '#3B82F6' },
   { id: 'party', label: 'Soirée 🔥', icon: Flame, color: '#F59E0B' },
 ];
@@ -41,6 +42,8 @@ const MOODS: { id: MoodCategory; label: string; icon: any; color: string }[] = [
 export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [sleepModalVisible, setSleepModalVisible] = useState(false);
   const { isScanning, scan } = useLibraryScan();
 
@@ -325,255 +328,257 @@ export const HomeScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  ambientGlow: {
-    position: 'absolute',
-    top: -100,
-    right: -100,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    opacity: 0.35,
-  },
-  scrollContent: {
-    paddingBottom: 120,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-  },
-  greetingText: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-  },
-  appTitle: {
-    ...typography.hero,
-    color: colors.text,
-    fontSize: 26,
-    marginTop: 2,
-  },
-  topIconsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-  },
-  moodsContainer: {
-    paddingHorizontal: 20,
-    gap: 8,
-    paddingBottom: 16,
-  },
-  moodChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: borderRadius.round,
-    backgroundColor: colors.surfaceCard,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  moodText: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  moodTextSelected: {
-    color: '#FFF',
-    fontWeight: '700',
-  },
-  heroCard: {
-    marginHorizontal: 20,
-    height: 180,
-    borderRadius: borderRadius.xl,
-    overflow: 'hidden',
-    position: 'relative',
-    marginBottom: 24,
-    ...shadows.soft,
-  },
-  heroArtwork: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  heroGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8, 10, 15, 0.65)',
-    padding: 16,
-    justifyContent: 'flex-end',
-  },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: borderRadius.sm,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  heroBadgeText: {
-    ...typography.badge,
-    color: '#FFF',
-  },
-  heroTitle: {
-    ...typography.h2,
-    color: colors.text,
-  },
-  heroArtist: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginBottom: 12,
-  },
-  heroPlayButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: borderRadius.round,
-    alignSelf: 'flex-start',
-  },
-  heroPlayText: {
-    ...typography.bodySmall,
-    color: '#FFF',
-    fontWeight: '700',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  sectionTitle: {
-    ...typography.h2,
-    color: colors.text,
-    fontSize: 18,
-  },
-  sectionCount: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-  },
-  horizontalList: {
-    paddingHorizontal: 20,
-    gap: 14,
-    paddingBottom: 16,
-  },
-  trackCard: {
-    width: 140,
-  },
-  trackCardImageContainer: {
-    width: 140,
-    height: 140,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: colors.surfaceCard,
-    marginBottom: 8,
-  },
-  trackCardImage: {
-    width: '100%',
-    height: '100%',
-  },
-  trackPlayOverlay: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trackCardTitle: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  trackCardArtist: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  playlistCard: {
-    width: 150,
-  },
-  playlistImage: {
-    width: 150,
-    height: 150,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.surfaceCard,
-    marginBottom: 8,
-  },
-  playlistName: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  playlistDetails: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  recentList: {
-    paddingHorizontal: 20,
-    gap: 8,
-  },
-  recentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: colors.surfaceCard,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-  },
-  recentThumb: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.sm,
-  },
-  recentInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  recentTitle: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  recentArtist: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    ambientGlow: {
+      position: 'absolute',
+      top: -100,
+      right: -100,
+      width: 280,
+      height: 280,
+      borderRadius: 140,
+      opacity: 0.35,
+    },
+    scrollContent: {
+      paddingBottom: 120,
+    },
+    topHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 16,
+    },
+    greetingText: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+    },
+    appTitle: {
+      ...typography.hero,
+      color: colors.text,
+      fontSize: 26,
+      marginTop: 2,
+    },
+    topIconsRow: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    iconBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceCard,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    moodsContainer: {
+      paddingHorizontal: 20,
+      gap: 8,
+      paddingBottom: 16,
+    },
+    moodChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: borderRadius.round,
+      backgroundColor: colors.surfaceCard,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    moodText: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    moodTextSelected: {
+      color: '#FFF',
+      fontWeight: '700',
+    },
+    heroCard: {
+      marginHorizontal: 20,
+      height: 180,
+      borderRadius: borderRadius.xl,
+      overflow: 'hidden',
+      position: 'relative',
+      marginBottom: 24,
+      ...shadows.soft,
+    },
+    heroArtwork: {
+      width: '100%',
+      height: '100%',
+      position: 'absolute',
+    },
+    heroGradient: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: 'rgba(8, 10, 15, 0.65)',
+      padding: 16,
+      justifyContent: 'flex-end',
+    },
+    heroBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: borderRadius.sm,
+      alignSelf: 'flex-start',
+      marginBottom: 8,
+    },
+    heroBadgeText: {
+      ...typography.badge,
+      color: '#FFF',
+    },
+    heroTitle: {
+      ...typography.h2,
+      color: colors.text,
+    },
+    heroArtist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      marginBottom: 12,
+    },
+    heroPlayButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: borderRadius.round,
+      alignSelf: 'flex-start',
+    },
+    heroPlayText: {
+      ...typography.bodySmall,
+      color: '#FFF',
+      fontWeight: '700',
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      marginBottom: 12,
+      marginTop: 8,
+    },
+    sectionTitle: {
+      ...typography.h2,
+      color: colors.text,
+      fontSize: 18,
+    },
+    sectionCount: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+    },
+    horizontalList: {
+      paddingHorizontal: 20,
+      gap: 14,
+      paddingBottom: 16,
+    },
+    trackCard: {
+      width: 140,
+    },
+    trackCardImageContainer: {
+      width: 140,
+      height: 140,
+      borderRadius: borderRadius.lg,
+      overflow: 'hidden',
+      position: 'relative',
+      backgroundColor: colors.surfaceCard,
+      marginBottom: 8,
+    },
+    trackCardImage: {
+      width: '100%',
+      height: '100%',
+    },
+    trackPlayOverlay: {
+      position: 'absolute',
+      bottom: 8,
+      right: 8,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    trackCardTitle: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    trackCardArtist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    playlistCard: {
+      width: 150,
+    },
+    playlistImage: {
+      width: 150,
+      height: 150,
+      borderRadius: borderRadius.lg,
+      backgroundColor: colors.surfaceCard,
+      marginBottom: 8,
+    },
+    playlistName: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    playlistDetails: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    recentList: {
+      paddingHorizontal: 20,
+      gap: 8,
+    },
+    recentItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      backgroundColor: colors.surfaceCard,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    recentThumb: {
+      width: 44,
+      height: 44,
+      borderRadius: borderRadius.sm,
+    },
+    recentInfo: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    recentTitle: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    recentArtist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+  });
+}
 
 export default HomeScreen;

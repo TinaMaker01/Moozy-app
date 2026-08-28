@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 import { Moon, X } from 'lucide-react-native';
-import { borderRadius, colors, shadows, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 interface Props {
@@ -25,6 +26,8 @@ const TIMER_OPTIONS = [
 ];
 
 export const SleepTimerModal: React.FC<Props> = ({ visible, onClose }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const {
     sleepTimerRemainingSeconds,
     startSleepTimer,
@@ -105,89 +108,91 @@ export const SleepTimerModal: React.FC<Props> = ({ visible, onClose }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: colors.surfaceCard,
-    borderTopLeftRadius: borderRadius.xxl,
-    borderTopRightRadius: borderRadius.xxl,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-    ...shadows.soft,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  title: {
-    ...typography.h2,
-    color: colors.text,
-    fontSize: 18,
-  },
-  closeBtn: {
-    padding: 4,
-  },
-  activeBanner: {
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: borderRadius.md,
-    padding: 12,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  activeBannerText: {
-    ...typography.bodySmall,
-    color: colors.text,
-  },
-  activeTime: {
-    color: colors.primaryLight,
-    fontWeight: '700',
-  },
-  cancelBtn: {
-    backgroundColor: colors.error,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: borderRadius.sm,
-  },
-  cancelBtnText: {
-    ...typography.badge,
-    color: '#FFF',
-  },
-  subtitle: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginBottom: 12,
-  },
-  optionsList: {
-    gap: 8,
-    marginBottom: 16,
-  },
-  optionItem: {
-    backgroundColor: colors.surface,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  optionText: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 15,
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
+    },
+    modalCard: {
+      backgroundColor: colors.surfaceCard,
+      borderTopLeftRadius: borderRadius.xxl,
+      borderTopRightRadius: borderRadius.xxl,
+      padding: 24,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      ...shadows.soft,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    title: {
+      ...typography.h2,
+      color: colors.text,
+      fontSize: 18,
+    },
+    closeBtn: {
+      padding: 4,
+    },
+    activeBanner: {
+      backgroundColor: 'rgba(139, 92, 246, 0.15)',
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: borderRadius.md,
+      padding: 12,
+      marginBottom: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    activeBannerText: {
+      ...typography.bodySmall,
+      color: colors.text,
+    },
+    activeTime: {
+      color: colors.primaryLight,
+      fontWeight: '700',
+    },
+    cancelBtn: {
+      backgroundColor: colors.error,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: borderRadius.sm,
+    },
+    cancelBtnText: {
+      ...typography.badge,
+      color: '#FFF',
+    },
+    subtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      marginBottom: 12,
+    },
+    optionsList: {
+      gap: 8,
+      marginBottom: 16,
+    },
+    optionItem: {
+      backgroundColor: colors.surface,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    optionText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 15,
+    },
+  });
+}

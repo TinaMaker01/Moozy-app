@@ -32,7 +32,8 @@ import {
   Sliders,
   Sparkles,
 } from 'lucide-react-native';
-import { borderRadius, colors, shadows, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { AudioService } from '../services/audioService';
 import { useMusicStore } from '../store/useMusicStore';
 import { RootStackParamList } from '../types/navigation';
@@ -57,6 +58,8 @@ function formatTime(seconds: number): string {
 export const PlayerScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [displayMode, setDisplayMode] = useState<'vinyl' | 'card'>('vinyl');
   const [sleepModalVisible, setSleepModalVisible] = useState(false);
   const [queueModalVisible, setQueueModalVisible] = useState(false);
@@ -324,206 +327,208 @@ export const PlayerScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: 'space-between',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  ambientOrbTop: {
-    position: 'absolute',
-    top: -80,
-    right: -80,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    opacity: 0.6,
-  },
-  ambientOrbBottom: {
-    position: 'absolute',
-    bottom: -60,
-    left: -60,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    opacity: 0.45,
-  },
-  noTrackText: {
-    ...typography.bodyLarge,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 40,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    zIndex: 10,
-  },
-  topBarCenter: {
-    alignItems: 'center',
-  },
-  nowPlayingSubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontSize: 10,
-  },
-  nowPlayingAlbum: {
-    ...typography.bodySmall,
-    color: colors.text,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  topBarRight: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  circleBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.surfaceCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-  },
-  artworkArea: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    zIndex: 5,
-  },
-  visualizerContainer: {
-    marginVertical: 4,
-    zIndex: 5,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    marginTop: 8,
-    zIndex: 5,
-  },
-  metaInfo: {
-    flex: 1,
-    marginRight: 16,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  hiResBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.surfaceCard,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: borderRadius.xs,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-  },
-  hiResText: {
-    ...typography.badge,
-    fontSize: 9,
-  },
-  genreText: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    fontSize: 11,
-  },
-  title: {
-    ...typography.hero,
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  artist: {
-    ...typography.bodyLarge,
-    color: colors.textSecondary,
-    fontSize: 15,
-    marginTop: 3,
-  },
-  favoriteButton: {
-    padding: 6,
-  },
-  progressContainer: {
-    paddingHorizontal: 20,
-    marginTop: 8,
-    zIndex: 5,
-  },
-  slider: {
-    width: '100%',
-    height: 36,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 6,
-    marginTop: -6,
-  },
-  timeText: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-  controlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    marginVertical: 10,
-    zIndex: 5,
-  },
-  sideControlBtn: {
-    padding: 10,
-  },
-  mainControlBtn: {
-    padding: 8,
-  },
-  giantPlayBtn: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bottomTools: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingTop: 6,
-    zIndex: 5,
-  },
-  toolBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.surfaceCard,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: borderRadius.round,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-  },
-  toolText: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  playIconOffset: {
-    marginLeft: 3,
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+      justifyContent: 'space-between',
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    ambientOrbTop: {
+      position: 'absolute',
+      top: -80,
+      right: -80,
+      width: 260,
+      height: 260,
+      borderRadius: 130,
+      opacity: 0.6,
+    },
+    ambientOrbBottom: {
+      position: 'absolute',
+      bottom: -60,
+      left: -60,
+      width: 240,
+      height: 240,
+      borderRadius: 120,
+      opacity: 0.45,
+    },
+    noTrackText: {
+      ...typography.bodyLarge,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 40,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      zIndex: 10,
+    },
+    topBarCenter: {
+      alignItems: 'center',
+    },
+    nowPlayingSubtitle: {
+      ...typography.caption,
+      color: colors.textMuted,
+      fontSize: 10,
+    },
+    nowPlayingAlbum: {
+      ...typography.bodySmall,
+      color: colors.text,
+      fontWeight: '600',
+      marginTop: 2,
+    },
+    topBarRight: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    circleBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: colors.surfaceCard,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    artworkArea: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+      zIndex: 5,
+    },
+    visualizerContainer: {
+      marginVertical: 4,
+      zIndex: 5,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      marginTop: 8,
+      zIndex: 5,
+    },
+    metaInfo: {
+      flex: 1,
+      marginRight: 16,
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 4,
+    },
+    hiResBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.surfaceCard,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: borderRadius.xs,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    hiResText: {
+      ...typography.badge,
+      fontSize: 9,
+    },
+    genreText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      fontSize: 11,
+    },
+    title: {
+      ...typography.hero,
+      color: colors.text,
+      fontSize: 22,
+      fontWeight: '700',
+    },
+    artist: {
+      ...typography.bodyLarge,
+      color: colors.textSecondary,
+      fontSize: 15,
+      marginTop: 3,
+    },
+    favoriteButton: {
+      padding: 6,
+    },
+    progressContainer: {
+      paddingHorizontal: 20,
+      marginTop: 8,
+      zIndex: 5,
+    },
+    slider: {
+      width: '100%',
+      height: 36,
+    },
+    timeRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 6,
+      marginTop: -6,
+    },
+    timeText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      fontSize: 12,
+    },
+    controlsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      marginVertical: 10,
+      zIndex: 5,
+    },
+    sideControlBtn: {
+      padding: 10,
+    },
+    mainControlBtn: {
+      padding: 8,
+    },
+    giantPlayBtn: {
+      width: 68,
+      height: 68,
+      borderRadius: 34,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bottomTools: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      paddingTop: 6,
+      zIndex: 5,
+    },
+    toolBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.surfaceCard,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: borderRadius.round,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    toolText: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    playIconOffset: {
+      marginLeft: 3,
+    },
+  });
+}
 
 export default PlayerScreen;

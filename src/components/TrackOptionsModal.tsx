@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Image,
   Modal,
@@ -15,7 +15,8 @@ import {
   Play,
   X,
 } from 'lucide-react-native';
-import { borderRadius, colors, shadows, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { Track } from '../types/music';
 
@@ -30,6 +31,8 @@ export const TrackOptionsModal: React.FC<Props> = ({
   visible,
   onClose,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const favorites = useMusicStore((s) => s.favorites);
   const toggleFavorite = useMusicStore((s) => s.toggleFavorite);
   const playNextTrack = useMusicStore((s) => s.playNextTrack);
@@ -156,81 +159,83 @@ export const TrackOptionsModal: React.FC<Props> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  card: {
-    backgroundColor: colors.surfaceCard,
-    borderTopLeftRadius: borderRadius.xxl,
-    borderTopRightRadius: borderRadius.xxl,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-    ...shadows.soft,
-  },
-  trackHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  artwork: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
-  },
-  headerInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  title: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  artist: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  closeBtn: {
-    padding: 6,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.divider,
-    marginVertical: 16,
-  },
-  actionsList: {
-    gap: 12,
-    marginBottom: 12,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  iconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  actionText: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
+    },
+    card: {
+      backgroundColor: colors.surfaceCard,
+      borderTopLeftRadius: borderRadius.xxl,
+      borderTopRightRadius: borderRadius.xxl,
+      padding: 20,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      ...shadows.soft,
+    },
+    trackHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    artwork: {
+      width: 48,
+      height: 48,
+      borderRadius: borderRadius.md,
+      backgroundColor: colors.surface,
+    },
+    headerInfo: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    title: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    artist: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    closeBtn: {
+      padding: 6,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: colors.divider,
+      marginVertical: 16,
+    },
+    actionsList: {
+      gap: 12,
+      marginBottom: 12,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+    },
+    iconCircle: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    actionText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+  });
+}
 
 export default TrackOptionsModal;

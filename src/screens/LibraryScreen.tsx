@@ -21,7 +21,8 @@ import {
   Search,
   X,
 } from 'lucide-react-native';
-import { borderRadius, colors, typography } from '../theme';
+import { borderRadius, ColorTokens, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { Track } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
@@ -35,6 +36,8 @@ type LibraryTab = 'tracks' | 'artists' | 'albums' | 'playlists' | 'favorites';
 export const LibraryScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [activeTab, setActiveTab] = useState<LibraryTab>('tracks');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOptionTrack, setSelectedOptionTrack] = useState<Track | null>(null);
@@ -321,165 +324,167 @@ export const LibraryScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  headerTitle: {
-    ...typography.hero,
-    color: colors.text,
-    fontSize: 26,
-  },
-  scanBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.surfaceCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceCard,
-    marginHorizontal: 20,
-    marginTop: 8,
-    marginBottom: 12,
-    paddingHorizontal: 14,
-    height: 44,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 10,
-    color: colors.text,
-    fontSize: 14,
-  },
-  tabsContainer: {
-    paddingHorizontal: 20,
-    gap: 8,
-    paddingBottom: 12,
-  },
-  tabChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: borderRadius.round,
-    backgroundColor: colors.surfaceCard,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  tabChipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  tabLabel: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  tabLabelSelected: {
-    color: '#FFF',
-    fontWeight: '700',
-  },
-  listContent: {
-    paddingBottom: 120,
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 30,
-    gap: 12,
-  },
-  emptyTitle: {
-    ...typography.h2,
-    color: colors.textSecondary,
-    fontSize: 17,
-  },
-  emptySubtitle: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    textAlign: 'center',
-  },
-  scanCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: borderRadius.round,
-    marginTop: 8,
-  },
-  scanCtaText: {
-    ...typography.bodySmall,
-    color: '#FFF',
-    fontWeight: '700',
-  },
-  cardItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: colors.surfaceCard,
-    marginHorizontal: 16,
-    marginVertical: 4,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-  },
-  artistAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  albumCover: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(6, 182, 212, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playlistIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(236, 72, 153, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardInfo: {
-    flex: 1,
-    marginLeft: 14,
-  },
-  cardTitle: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  cardSubtitle: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 8,
+    },
+    headerTitle: {
+      ...typography.hero,
+      color: colors.text,
+      fontSize: 26,
+    },
+    scanBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: colors.surfaceCard,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surfaceCard,
+      marginHorizontal: 20,
+      marginTop: 8,
+      marginBottom: 12,
+      paddingHorizontal: 14,
+      height: 44,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    searchInput: {
+      flex: 1,
+      marginLeft: 10,
+      color: colors.text,
+      fontSize: 14,
+    },
+    tabsContainer: {
+      paddingHorizontal: 20,
+      gap: 8,
+      paddingBottom: 12,
+    },
+    tabChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: borderRadius.round,
+      backgroundColor: colors.surfaceCard,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    tabChipSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    tabLabel: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    tabLabelSelected: {
+      color: '#FFF',
+      fontWeight: '700',
+    },
+    listContent: {
+      paddingBottom: 120,
+    },
+    emptyState: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 60,
+      paddingHorizontal: 30,
+      gap: 12,
+    },
+    emptyTitle: {
+      ...typography.h2,
+      color: colors.textSecondary,
+      fontSize: 17,
+    },
+    emptySubtitle: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      textAlign: 'center',
+    },
+    scanCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: colors.primary,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: borderRadius.round,
+      marginTop: 8,
+    },
+    scanCtaText: {
+      ...typography.bodySmall,
+      color: '#FFF',
+      fontWeight: '700',
+    },
+    cardItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      backgroundColor: colors.surfaceCard,
+      marginHorizontal: 16,
+      marginVertical: 4,
+      borderRadius: borderRadius.lg,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    artistAvatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: 'rgba(139, 92, 246, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    albumCover: {
+      width: 48,
+      height: 48,
+      borderRadius: borderRadius.md,
+      backgroundColor: 'rgba(6, 182, 212, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    playlistIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: borderRadius.md,
+      backgroundColor: 'rgba(236, 72, 153, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cardInfo: {
+      flex: 1,
+      marginLeft: 14,
+    },
+    cardTitle: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    cardSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+  });
+}
 
 export default LibraryScreen;

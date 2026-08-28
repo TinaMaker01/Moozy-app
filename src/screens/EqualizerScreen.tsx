@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -9,7 +9,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AudioSlider } from '../components/AudioSlider';
 import { RotateCcw, Sliders, Volume2, Waves } from 'lucide-react-native';
-import { borderRadius, colors, shadows, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { EqualizerPreset, EqualizerSettings } from '../types/music';
 
@@ -34,6 +35,8 @@ const BANDS: { key: keyof EqualizerSettings['bands']; label: string }[] = [
 
 export const EqualizerScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const {
     equalizer,
     setEqualizerPreset,
@@ -193,182 +196,184 @@ export const EqualizerScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingBottom: 120,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-  },
-  headerTitle: {
-    ...typography.hero,
-    color: colors.text,
-    fontSize: 26,
-  },
-  headerSubtitle: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  resetBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.surfaceCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-  },
-  sectionHeading: {
-    ...typography.h2,
-    color: colors.text,
-    fontSize: 16,
-    paddingHorizontal: 20,
-    marginTop: 12,
-    marginBottom: 12,
-  },
-  presetsList: {
-    paddingHorizontal: 20,
-    gap: 8,
-    paddingBottom: 16,
-  },
-  presetChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: borderRadius.round,
-    backgroundColor: colors.surfaceCard,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  presetChipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-    ...shadows.glow(colors.primaryGlow),
-  },
-  presetText: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  presetTextSelected: {
-    color: '#FFF',
-    fontWeight: '700',
-  },
-  eqBox: {
-    marginHorizontal: 20,
-    backgroundColor: colors.surfaceCard,
-    borderRadius: borderRadius.xl,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-    marginBottom: 16,
-    ...shadows.soft,
-  },
-  eqBoxHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  eqBoxTitle: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  bandsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  bandCol: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  gainText: {
-    ...typography.badge,
-    color: colors.primaryLight,
-    fontSize: 11,
-    minHeight: 14,
-  },
-  sliderVerticalWrapper: {
-    height: 140,
-    width: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  bandSlider: {
-    width: 140,
-    height: 40,
-    transform: [{ rotate: '-90deg' }],
-  },
-  bandLabel: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    fontSize: 10,
-    marginTop: 4,
-  },
-  effectCard: {
-    marginHorizontal: 20,
-    backgroundColor: colors.surfaceCard,
-    borderRadius: borderRadius.xl,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-    marginBottom: 12,
-    ...shadows.soft,
-  },
-  effectHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  effectIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(236, 72, 153, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cyanIconWrapper: {
-    backgroundColor: 'rgba(6, 182, 212, 0.15)',
-  },
-  effectInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  effectTitle: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  effectSubtitle: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    fontSize: 11,
-  },
-  effectValue: {
-    ...typography.bodyLarge,
-    color: colors.primaryLight,
-    fontWeight: '700',
-  },
-  horizontalSlider: {
-    width: '100%',
-    height: 36,
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      paddingBottom: 120,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 16,
+    },
+    headerTitle: {
+      ...typography.hero,
+      color: colors.text,
+      fontSize: 26,
+    },
+    headerSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    resetBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: colors.surfaceCard,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    sectionHeading: {
+      ...typography.h2,
+      color: colors.text,
+      fontSize: 16,
+      paddingHorizontal: 20,
+      marginTop: 12,
+      marginBottom: 12,
+    },
+    presetsList: {
+      paddingHorizontal: 20,
+      gap: 8,
+      paddingBottom: 16,
+    },
+    presetChip: {
+      paddingHorizontal: 16,
+      paddingVertical: 9,
+      borderRadius: borderRadius.round,
+      backgroundColor: colors.surfaceCard,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    presetChipSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+      ...shadows.glow(colors.primaryGlow),
+    },
+    presetText: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    presetTextSelected: {
+      color: '#FFF',
+      fontWeight: '700',
+    },
+    eqBox: {
+      marginHorizontal: 20,
+      backgroundColor: colors.surfaceCard,
+      borderRadius: borderRadius.xl,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      marginBottom: 16,
+      ...shadows.soft,
+    },
+    eqBoxHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 16,
+    },
+    eqBoxTitle: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    bandsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      paddingVertical: 12,
+    },
+    bandCol: {
+      alignItems: 'center',
+      gap: 6,
+    },
+    gainText: {
+      ...typography.badge,
+      color: colors.primaryLight,
+      fontSize: 11,
+      minHeight: 14,
+    },
+    sliderVerticalWrapper: {
+      height: 140,
+      width: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    bandSlider: {
+      width: 140,
+      height: 40,
+      transform: [{ rotate: '-90deg' }],
+    },
+    bandLabel: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      fontSize: 10,
+      marginTop: 4,
+    },
+    effectCard: {
+      marginHorizontal: 20,
+      backgroundColor: colors.surfaceCard,
+      borderRadius: borderRadius.xl,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      marginBottom: 12,
+      ...shadows.soft,
+    },
+    effectHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    effectIconWrapper: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(236, 72, 153, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cyanIconWrapper: {
+      backgroundColor: 'rgba(6, 182, 212, 0.15)',
+    },
+    effectInfo: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    effectTitle: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    effectSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      fontSize: 11,
+    },
+    effectValue: {
+      ...typography.bodyLarge,
+      color: colors.primaryLight,
+      fontWeight: '700',
+    },
+    horizontalSlider: {
+      width: '100%',
+      height: 36,
+    },
+  });
+}
 
 export default EqualizerScreen;

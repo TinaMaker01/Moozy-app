@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -6,7 +6,8 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { borderRadius, colors, shadows } from '../theme';
+import { borderRadius, ColorTokens, shadows } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
   isPlaying: boolean;
@@ -23,6 +24,8 @@ export const AnimatedVinyl: React.FC<Props> = ({
   mode = 'vinyl',
   glowColor,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const rotationLoop = useRef<Animated.CompositeAnimation | null>(null);
@@ -134,69 +137,73 @@ export const AnimatedVinyl: React.FC<Props> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  cardContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-  },
-  cardWrapper: {
-    width: '100%',
-    height: '100%',
-    borderRadius: borderRadius.xxl,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: colors.borderGlass,
-    ...shadows.soft,
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-  },
-  vinylOuter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-  },
-  glowBehind: {
-    position: 'absolute',
-    width: '90%',
-    height: '90%',
-    borderRadius: 9999,
-    filter: 'blur(30px)',
-    opacity: 0.8,
-  },
-  vinylDisc: {
-    backgroundColor: '#0F121A',
-    borderWidth: 4,
-    borderColor: '#1F2636',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.soft,
-  },
-  groove: {
-    position: 'absolute',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  centerArtworkWrapper: {
-    overflow: 'hidden',
-    borderWidth: 4,
-    borderColor: '#080A0F',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerImage: {
-    width: '100%',
-    height: '100%',
-  },
-  spindleHole: {
-    position: 'absolute',
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#080A0F',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    cardContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+    },
+    cardWrapper: {
+      width: '100%',
+      height: '100%',
+      borderRadius: borderRadius.xxl,
+      overflow: 'hidden',
+      borderWidth: 1.5,
+      borderColor: colors.borderGlass,
+      ...shadows.soft,
+    },
+    cardImage: {
+      width: '100%',
+      height: '100%',
+    },
+    vinylOuter: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+    },
+    glowBehind: {
+      position: 'absolute',
+      width: '90%',
+      height: '90%',
+      borderRadius: 9999,
+      filter: 'blur(30px)',
+      opacity: 0.8,
+    },
+    // The vinyl disc itself stays a dark physical-media black in both themes —
+    // only the glow/border around it (above) follows Light/Dark/System.
+    vinylDisc: {
+      backgroundColor: '#0F121A',
+      borderWidth: 4,
+      borderColor: '#1F2636',
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...shadows.soft,
+    },
+    groove: {
+      position: 'absolute',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.05)',
+    },
+    centerArtworkWrapper: {
+      overflow: 'hidden',
+      borderWidth: 4,
+      borderColor: '#080A0F',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    centerImage: {
+      width: '100%',
+      height: '100%',
+    },
+    spindleHole: {
+      position: 'absolute',
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: '#080A0F',
+      borderWidth: 2,
+      borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+  });
+}
