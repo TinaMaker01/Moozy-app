@@ -1,0 +1,60 @@
+// Manual Jest mock — the real module wraps native playback/notification
+// turbo modules that don't exist under the Jest environment.
+const TrackPlayer = {
+  setupPlayer: jest.fn(() => Promise.resolve()),
+  updateOptions: jest.fn(() => Promise.resolve()),
+  add: jest.fn(() => Promise.resolve()),
+  remove: jest.fn(() => Promise.resolve()),
+  move: jest.fn(() => Promise.resolve()),
+  reset: jest.fn(() => Promise.resolve()),
+  skip: jest.fn(() => Promise.resolve()),
+  skipToNext: jest.fn(() => Promise.resolve()),
+  skipToPrevious: jest.fn(() => Promise.resolve()),
+  play: jest.fn(() => Promise.resolve()),
+  pause: jest.fn(() => Promise.resolve()),
+  stop: jest.fn(() => Promise.resolve()),
+  seekTo: jest.fn(() => Promise.resolve()),
+  setRepeatMode: jest.fn(() => Promise.resolve()),
+  getQueue: jest.fn(() => Promise.resolve([])),
+  getActiveTrackIndex: jest.fn(() => Promise.resolve(undefined)),
+  getPlaybackState: jest.fn(() => Promise.resolve({ state: 'none' })),
+  removeUpcomingTracks: jest.fn(() => Promise.resolve()),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+};
+
+module.exports = {
+  __esModule: true,
+  default: TrackPlayer,
+  Event: {
+    RemotePlay: 'remote-play',
+    RemotePause: 'remote-pause',
+    RemoteNext: 'remote-next',
+    RemotePrevious: 'remote-previous',
+    RemoteSeek: 'remote-seek',
+    RemoteStop: 'remote-stop',
+    RemoteDuck: 'remote-duck',
+  },
+  State: {
+    None: 'none',
+    Ready: 'ready',
+    Playing: 'playing',
+    Paused: 'paused',
+    Stopped: 'stopped',
+    Buffering: 'buffering',
+  },
+  Capability: {
+    Play: 'play',
+    Pause: 'pause',
+    SkipToNext: 'skip-to-next',
+    SkipToPrevious: 'skip-to-previous',
+    SeekTo: 'seek-to',
+    Stop: 'stop',
+  },
+  AppKilledPlaybackBehavior: {
+    StopPlaybackAndRemoveNotification: 'stop-playback-and-remove-notification',
+  },
+  RepeatMode: { Off: 0, Track: 1, Queue: 2 },
+  useActiveTrack: () => undefined,
+  usePlaybackState: () => ({ state: 'none' }),
+  useProgress: () => ({ position: 0, buffered: 0, duration: 0 }),
+};

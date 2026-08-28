@@ -3,6 +3,7 @@ import TrackPlayer, {
   Capability,
   RepeatMode as TPRepeatMode,
   State,
+  Track as TPTrack,
 } from 'react-native-track-player';
 import { RepeatMode, Track } from '../types/music';
 
@@ -57,44 +58,82 @@ export async function setupPlayer(): Promise<boolean> {
   }
 }
 
+/** Maps our app-level Track shape to the fields react-native-track-player expects. */
+function toTrackPlayerFormat(track: Track): TPTrack {
+  return {
+    id: track.id,
+    url: track.url,
+    title: track.title,
+    artist: track.artist,
+    artwork: track.artwork,
+    duration: track.duration,
+    genre: track.genre,
+  };
+}
+
 export const AudioService = {
   async playTrack(track: Track, queueList?: Track[]) {
     await setupPlayer();
 
-    // Prepare track for TrackPlayer format
-    const formattedTrack = {
-      id: track.id,
-      url: track.url,
-      title: track.title,
-      artist: track.artist,
-      artwork: track.artwork,
-      duration: track.duration,
-      genre: track.genre,
-    };
+    const targetQueue = queueList && queueList.length > 0 ? queueList : [track];
+    const trackIndex = Math.max(
+      targetQueue.findIndex((t) => t.id === track.id),
+      0
+    );
 
-    if (queueList && queueList.length > 0) {
-      await TrackPlayer.reset();
-      const formattedQueue = queueList.map((t) => ({
-        id: t.id,
-        url: t.url,
-        title: t.title,
-        artist: t.artist,
-        artwork: t.artwork,
-        duration: t.duration,
-        genre: t.genre,
-      }));
-      await TrackPlayer.add(formattedQueue);
-
-      const trackIndex = queueList.findIndex((t) => t.id === track.id);
-      if (trackIndex >= 0) {
-        await TrackPlayer.skip(trackIndex);
-      }
-    } else {
-      await TrackPlayer.reset();
-      await TrackPlayer.add([formattedTrack]);
+    // If the requested queue is already the one loaded in the native player
+    // (e.g. tapping a different song from the list currently playing), just
+    // jump to it instead of tearing down and rebuilding the whole queue —
+    // that avoids an audible glitch and scales to large libraries where
+    // resetting + re-adding thousands of tracks on every tap would be slow.
+    let queueAlreadyLoaded = false;
+    try {
+      const existingQueue = await TrackPlayer.getQueue();
+      queueAlreadyLoaded =
+        existingQueue.length === targetQueue.length &&
+        existingQueue.every((t, i) => t.id === targetQueue[i].id);
+    } catch (e) {
+      queueAlreadyLoaded = false;
     }
 
+    if (queueAlreadyLoaded) {
+      await TrackPlayer.skip(trackIndex);
+      await TrackPlayer.play();
+      return;
+    }
+
+    await TrackPlayer.reset();
+    await TrackPlayer.add(targetQueue.map(toTrackPlayerFormat));
+    await TrackPlayer.skip(trackIndex);
     await TrackPlayer.play();
+  },
+
+  /** Inserts a track into the native queue at a specific index without disturbing playback. */
+  async insertTrack(track: Track, atIndex: number) {
+    await TrackPlayer.add([toTrackPlayerFormat(track)], atIndex);
+  },
+
+  /** Appends a track to the end of the native queue. */
+  async addToQueue(track: Track) {
+    await TrackPlayer.add([toTrackPlayerFormat(track)]);
+  },
+
+  /** Removes the track at `index` from the native queue. */
+  async removeAt(index: number) {
+    await TrackPlayer.remove(index);
+  },
+
+  /** Moves a track within the native queue, mirroring a drag-to-reorder in the UI. */
+  async moveTrack(fromIndex: number, toIndex: number) {
+    await TrackPlayer.move(fromIndex, toIndex);
+  },
+
+  /** Replaces everything after the currently playing track with `tracks` (used by shuffle and "clear queue"). */
+  async setUpcomingQueue(tracks: Track[]) {
+    await TrackPlayer.removeUpcomingTracks();
+    if (tracks.length > 0) {
+      await TrackPlayer.add(tracks.map(toTrackPlayerFormat));
+    }
   },
 
   async togglePlayPause() {

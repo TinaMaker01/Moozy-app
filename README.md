@@ -1,31 +1,28 @@
 # Moozy
 
-A React Native application providing a profile view and a data dashboard.
+Un lecteur de musique Android/iOS en React Native : bibliothèque locale, lecture en arrière-plan avec contrôle depuis la notification et l'écran verrouillé, playlists, favoris, égaliseur, minuteur de sommeil.
 
-## Prerequisites
+## Stack technique
+
+- **React Native** 0.78 / **React** 19 / **TypeScript**
+- **react-native-track-player** — moteur de lecture, notification média, contrôle lockscreen
+- **zustand** — état global (bibliothèque, lecture, paramètres)
+- **@react-navigation** (bottom-tabs + native-stack) — navigation
+- **react-native-fs** — scan du stockage local pour découvrir les fichiers audio
+- **AsyncStorage** — persistance locale (favoris, playlists, historique, bibliothèque)
+
+## Prérequis
+
 - Node.js (>=18)
-- React Native development environment set up (Android Studio/Xcode)
+- Environnement React Native configuré (Android Studio et/ou Xcode)
 
 ## Installation
 
-1. Clone the repository (if applicable) and navigate to the project directory:
-   ```bash
-   cd Moozy
-   ```
+```bash
+npm install
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-## Running on a Physical Device
-
-### Prerequisites
-- Enable **Developer Options** and **USB Debugging** on your smartphone.
-- Connect your device to your computer via USB.
-
-### Run Command
-Once the device is detected (`adb devices` for Android, `xcrun xctrace list devices` for iOS), run:
+## Lancer l'app
 
 ```bash
 # Android
@@ -35,17 +32,32 @@ npx react-native run-android
 npx react-native run-ios --device
 ```
 
-## Project Structure
+Pour un appareil physique : activer le mode développeur + débogage USB, le connecter, puis vérifier qu'il est détecté (`adb devices` / `xcrun xctrace list devices`) avant de lancer la commande ci-dessus.
+
+## Structure du projet
+
 ```text
-├── android/            # Native Android configuration
-├── ios/                # Native iOS configuration
-├── src/                # Application source code
-│   ├── components/     # Shared UI components
-│   ├── navigation/     # App navigation configuration
-│   └── screens/        # Screen components
-├── App.tsx             # Entry point
-├── index.js            # JavaScript bundle entry
-├── metro.config.js     # Metro bundler config
-├── package.json        # Dependencies and scripts
-└── tsconfig.json       # TypeScript configuration
+├── android/                 # Configuration native Android
+├── ios/                     # Configuration native iOS
+├── src/
+│   ├── components/          # Composants UI partagés (MiniPlayer, modales, visualiseur…)
+│   ├── hooks/                # Hooks partagés (scan de bibliothèque…)
+│   ├── navigation/           # Configuration de la navigation
+│   ├── screens/               # Écrans de l'application
+│   ├── services/               # Lecture audio (TrackPlayer) et scan du stockage local
+│   ├── store/                   # État global zustand (musique, paramètres)
+│   ├── theme/                    # Design tokens (couleurs, typographie, espacements)
+│   ├── types/                     # Types partagés (Track, Playlist, navigation…)
+│   └── utils/                      # Utilitaires (palette dynamique par morceau…)
+├── App.tsx                  # Point d'entrée
+├── index.js                 # Point d'entrée du bundle JS
+├── metro.config.js          # Configuration Metro
+├── package.json
+└── tsconfig.json
+```
+
+## Tests
+
+```bash
+npm test
 ```

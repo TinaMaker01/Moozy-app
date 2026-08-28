@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SystemBars } from 'react-native-edge-to-edge';
 import BootSplash from 'react-native-bootsplash';
 import AppNavigator from './src/navigation/AppNavigator';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { MiniPlayer } from './src/components/MiniPlayer';
 import { setupPlayer } from './src/services/audioService';
 import { useMusicStore } from './src/store/useMusicStore';
@@ -41,12 +42,14 @@ function App(): React.JSX.Element {
           of the status & nav bars (mandatory replacement for <StatusBar> since
           Android 15 deprecates its window-inset APIs). */}
       <SystemBars style="light" />
-      <NavigationContainer theme={MoozyDarkNavTheme}>
-        <View style={styles.container}>
-          <AppNavigator />
-          <MiniPlayer />
-        </View>
-      </NavigationContainer>
+      <ErrorBoundary>
+        <NavigationContainer theme={MoozyDarkNavTheme}>
+          <View style={styles.container}>
+            <AppNavigator />
+            <MiniPlayer />
+          </View>
+        </NavigationContainer>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

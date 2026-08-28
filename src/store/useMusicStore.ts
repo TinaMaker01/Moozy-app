@@ -70,6 +70,8 @@ interface MusicStoreState {
   tracks: Track[];
   currentTrack: Track | null;
   queue: Track[];
+  /** The queue in its pre-shuffle order, so toggling shuffle off can restore it. */
+  originalQueue: Track[];
   favorites: string[];
   playlists: Playlist[];
   recentlyPlayed: Track[];
@@ -94,7 +96,7 @@ interface MusicStoreState {
   deletePlaylist: (playlistId: string) => Promise<void>;
   addTrackToPlaylist: (playlistId: string, trackId: string) => Promise<void>;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
-  toggleShuffle: () => void;
+  toggleShuffle: () => Promise<void>;
   cycleRepeatMode: () => Promise<void>;
   setSearchQuery: (query: string) => void;
   setSelectedMood: (mood: MoodCategory) => void;
@@ -105,6 +107,7 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
   tracks: INITIAL_DEMO_TRACKS,
   currentTrack: INITIAL_DEMO_TRACKS[0],
   queue: INITIAL_DEMO_TRACKS,
+  originalQueue: INITIAL_DEMO_TRACKS,
   favorites: ['demo-1', 'demo-3'],
   playlists: [
     {
@@ -171,6 +174,10 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     set({
       currentTrack: track,
       queue: effectiveQueue,
+      // The queue as requested (e.g. by tapping a song in the Library tab)
+      // is always the canonical, unshuffled order — shuffle only reorders
+      // what's ahead of it from here, in toggleShuffle below.
+      originalQueue: effectiveQueue,
       recentlyPlayed: [track, ...get().recentlyPlayed.filter((t) => t.id !== track.id)].slice(0, 20),
     });
 
@@ -192,17 +199,20 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     const updated = [...queue];
     updated.splice(insertIdx, 0, track);
     set({ queue: updated });
+    AudioService.insertTrack(track, insertIdx).catch(console.warn);
   },
 
   addToQueue: (track) => {
     const { queue } = get();
     set({ queue: [...queue, track] });
+    AudioService.addToQueue(track).catch(console.warn);
   },
 
   removeFromQueue: (index) => {
     const { queue } = get();
     const updated = queue.filter((_, i) => i !== index);
     set({ queue: updated });
+    AudioService.removeAt(index).catch(console.warn);
   },
 
   moveQueueItem: (fromIndex, toIndex) => {
@@ -214,11 +224,13 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     const [movedItem] = updated.splice(fromIndex, 1);
     updated.splice(toIndex, 0, movedItem);
     set({ queue: updated });
+    AudioService.moveTrack(fromIndex, toIndex).catch(console.warn);
   },
 
   clearQueue: () => {
     const { currentTrack } = get();
     set({ queue: currentTrack ? [currentTrack] : [] });
+    AudioService.setUpcomingQueue([]).catch(console.warn);
   },
 
   toggleFavorite: async (trackId) => {
@@ -276,9 +288,38 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     await AsyncStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(updated));
   },
 
-  toggleShuffle: () => {
-    const newShuffle = !get().isShuffle;
+  toggleShuffle: async () => {
+    const { isShuffle, queue, originalQueue, currentTrack } = get();
+    const newShuffle = !isShuffle;
     set({ isShuffle: newShuffle });
+
+    if (!currentTrack) {
+      return;
+    }
+    const currentIdx = queue.findIndex((t) => t.id === currentTrack.id);
+    if (currentIdx < 0) {
+      return;
+    }
+
+    if (newShuffle) {
+      // Shuffle everything still ahead of the currently playing track
+      // (Fisher-Yates), leaving what's already played untouched.
+      const upcoming = queue.slice(currentIdx + 1);
+      for (let i = upcoming.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [upcoming[i], upcoming[j]] = [upcoming[j], upcoming[i]];
+      }
+      set({ queue: [...queue.slice(0, currentIdx + 1), ...upcoming] });
+      await AudioService.setUpcomingQueue(upcoming);
+    } else {
+      // Restore the pre-shuffle order for whatever's left to play.
+      const remainingIds = new Set(queue.slice(currentIdx + 1).map((t) => t.id));
+      const restored = originalQueue.filter(
+        (t) => remainingIds.has(t.id) && t.id !== currentTrack.id
+      );
+      set({ queue: [...queue.slice(0, currentIdx + 1), ...restored] });
+      await AudioService.setUpcomingQueue(restored);
+    }
   },
 
   cycleRepeatMode: async () => {
