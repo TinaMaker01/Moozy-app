@@ -1,6 +1,11 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EqualizerPreset, EqualizerSettings } from '../types/music';
 import { AudioService } from '../services/audioService';
+
+const THEME_MODE_STORAGE_KEY = '@moozy_theme_mode_v1';
+
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 const PRESET_CONFIGS: Record<EqualizerPreset, EqualizerSettings['bands']> = {
   Flat: { hz60: 0, hz230: 0, hz910: 0, hz3600: 0, hz14000: 0 },
@@ -19,8 +24,12 @@ interface SettingsStoreState {
   sleepTimerIntervalId: any;
   hapticFeedbackEnabled: boolean;
   highQualityAudio: boolean;
+  /** Light/Dark/System — 'system' follows the OS appearance setting. Persisted across restarts. */
+  themeMode: ThemeMode;
 
   // Actions
+  initSettings: () => Promise<void>;
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
   setEqualizerPreset: (preset: EqualizerPreset) => void;
   setBandGain: (band: keyof EqualizerSettings['bands'], gain: number) => void;
   setBassBoost: (val: number) => void;
@@ -42,6 +51,25 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   sleepTimerIntervalId: null,
   hapticFeedbackEnabled: true,
   highQualityAudio: true,
+  // Default stays dark — that's how the app has always looked; Light/System
+  // are opt-in via the new Appearance setting, not a silent behavior change.
+  themeMode: 'dark',
+
+  initSettings: async () => {
+    try {
+      const storedMode = await AsyncStorage.getItem(THEME_MODE_STORAGE_KEY);
+      if (storedMode === 'light' || storedMode === 'dark' || storedMode === 'system') {
+        set({ themeMode: storedMode });
+      }
+    } catch (e) {
+      console.warn('Failed to load persisted theme mode:', e);
+    }
+  },
+
+  setThemeMode: async (mode) => {
+    set({ themeMode: mode });
+    await AsyncStorage.setItem(THEME_MODE_STORAGE_KEY, mode);
+  },
 
   setEqualizerPreset: (preset) => {
     set((state) => ({

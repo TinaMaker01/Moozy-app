@@ -1,4 +1,4 @@
-export const colors = {
+export const darkColors = {
   // Backgrounds
   background: '#080A0F',
   backgroundElevated: '#0F131C',
@@ -41,6 +41,60 @@ export const colors = {
   tabBarBg: '#0B0E17',
   progressBarBg: '#232C3F',
 };
+
+/**
+ * Light counterpart to `darkColors`, keeping the same brand accents
+ * (violet / cyan / pink) but on light backgrounds with darker, more
+ * saturated accent tones so contrast stays comfortable in daylight.
+ */
+export const lightColors: ColorTokens = {
+  background: '#F6F6FA',
+  backgroundElevated: '#FFFFFF',
+  surface: '#FFFFFF',
+  surfaceCard: '#F0F0F6',
+  surfaceGlass: 'rgba(255, 255, 255, 0.85)',
+  surfaceHighlight: 'rgba(15, 18, 34, 0.04)',
+
+  border: '#E3E3EC',
+  borderGlass: 'rgba(15, 18, 34, 0.08)',
+  divider: '#E9E9F2',
+
+  primary: '#7C3AED',
+  primaryLight: '#8B5CF6',
+  primaryDark: '#5B21B6',
+  primaryGlow: 'rgba(124, 58, 237, 0.22)',
+
+  secondary: '#0E7490',
+  secondaryGlow: 'rgba(14, 116, 144, 0.22)',
+
+  accent: '#DB2777',
+  accentGlow: 'rgba(219, 39, 119, 0.22)',
+
+  success: '#059669',
+  warning: '#D97706',
+  error: '#DC2626',
+
+  text: '#12141F',
+  textSecondary: '#4B5065',
+  textMuted: '#868CA0',
+  textInverse: '#FFFFFF',
+
+  activeTrackBg: 'rgba(124, 58, 237, 0.10)',
+  activeTrackBorder: 'rgba(124, 58, 237, 0.30)',
+  playerBarBg: 'rgba(255, 255, 255, 0.92)',
+  tabBarBg: '#FFFFFF',
+  progressBarBg: '#E3E3EC',
+};
+
+export type ColorTokens = typeof darkColors;
+
+/**
+ * @deprecated Static import kept for screens not yet migrated to
+ * `useTheme()` — always resolves to the dark palette regardless of the
+ * user's chosen appearance. New/updated screens should use `useTheme()`
+ * from `../theme/ThemeContext` instead so they follow Light/Dark/System.
+ */
+export const colors = darkColors;
 
 export const gradients = {
   primary: ['#8B5CF6', '#EC4899'],

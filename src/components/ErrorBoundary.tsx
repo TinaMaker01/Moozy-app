@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { borderRadius, colors, typography } from '../theme';
+import { StyleSheet, View } from 'react-native';
+import { ErrorState } from './states/ErrorState';
+import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
   children: React.ReactNode;
@@ -10,6 +11,30 @@ interface State {
   hasError: boolean;
   error: Error | null;
 }
+
+/** Theme-aware full-screen wrapper around the shared ErrorState, since the class component below can't call hooks itself. */
+const CrashScreen: React.FC<{ error: Error | null; onRetry: () => void }> = ({
+  error,
+  onRetry,
+}) => {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ErrorState
+        title="Oups, un problème est survenu"
+        message={error?.message || 'Une erreur inattendue a interrompu l’affichage.'}
+        onRetry={onRetry}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+});
 
 /**
  * Catches render-time crashes anywhere below it in the tree so a single bad
@@ -34,51 +59,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <View style={styles.container}>
-          <Text style={styles.title}>Oups, un problème est survenu</Text>
-          <Text style={styles.message}>
-            {this.state.error?.message || 'Une erreur inattendue a interrompu l’affichage.'}
-          </Text>
-          <TouchableOpacity style={styles.button} onPress={this.handleRetry}>
-            <Text style={styles.buttonText}>Réessayer</Text>
-          </TouchableOpacity>
-        </View>
-      );
+      return <CrashScreen error={this.state.error} onRetry={this.handleRetry} />;
     }
     return this.props.children;
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    gap: 12,
-  },
-  title: {
-    ...typography.h2,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  message: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  button: {
-    marginTop: 12,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: borderRadius.round,
-  },
-  buttonText: {
-    ...typography.bodySmall,
-    color: '#FFF',
-    fontWeight: '700',
-  },
-});

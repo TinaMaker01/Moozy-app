@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,26 +18,39 @@ import {
   Headphones,
   Moon,
   Sliders,
+  Smartphone,
   Sparkles,
+  Sun,
   Vibrate,
 } from 'lucide-react-native';
-import { borderRadius, colors, shadows, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
-import { useSettingsStore } from '../store/useSettingsStore';
+import { ThemeMode, useSettingsStore } from '../store/useSettingsStore';
 import { SleepTimerModal } from '../components/SleepTimerModal';
 import { RootStackParamList } from '../types/navigation';
 import { useLibraryScan } from '../hooks/useLibraryScan';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+const APPEARANCE_OPTIONS: { id: ThemeMode; label: string; icon: any }[] = [
+  { id: 'light', label: 'Clair', icon: Sun },
+  { id: 'dark', label: 'Sombre', icon: Moon },
+  { id: 'system', label: 'Système', icon: Smartphone },
+];
+
 export const SettingsScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [sleepModalVisible, setSleepModalVisible] = useState(false);
   const { isScanning, scan } = useLibraryScan();
 
   const tracks = useMusicStore((s) => s.tracks);
   const {
+    themeMode,
+    setThemeMode,
     hapticFeedbackEnabled,
     highQualityAudio,
     toggleHapticFeedback,
@@ -72,6 +85,40 @@ export const SettingsScreen: React.FC = () => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Paramètres</Text>
+        </View>
+
+        {/* Appearance Section */}
+        <Text style={styles.sectionHeader}>Apparence</Text>
+        <View style={styles.sectionCard}>
+          <View style={styles.appearanceRow}>
+            {APPEARANCE_OPTIONS.map((option) => {
+              const isSelected = themeMode === option.id;
+              const Icon = option.icon;
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={`Thème ${option.label}`}
+                  style={[
+                    styles.appearanceOption,
+                    isSelected && styles.appearanceOptionSelected,
+                  ]}
+                  onPress={() => setThemeMode(option.id)}
+                >
+                  <Icon size={20} color={isSelected ? '#FFF' : colors.textSecondary} />
+                  <Text
+                    style={[
+                      styles.appearanceLabel,
+                      isSelected && styles.appearanceLabelSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {/* Audio Quality & Haptics Section */}
@@ -194,7 +241,7 @@ export const SettingsScreen: React.FC = () => {
             </View>
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Moozy Music Player</Text>
-              <Text style={styles.settingSubtitle}>Version 1.0.0 (Édition Dark Aura)</Text>
+              <Text style={styles.settingSubtitle}>Version 1.1.0</Text>
             </View>
           </View>
         </View>
@@ -208,99 +255,129 @@ export const SettingsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingBottom: 120,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-  },
-  headerTitle: {
-    ...typography.hero,
-    color: colors.text,
-    fontSize: 26,
-  },
-  sectionHeader: {
-    ...typography.h2,
-    color: colors.textSecondary,
-    fontSize: 14,
-    paddingHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  sectionCard: {
-    backgroundColor: colors.surfaceCard,
-    marginHorizontal: 20,
-    borderRadius: borderRadius.xl,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.borderGlass,
-    ...shadows.soft,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cyanIconBg: {
-    backgroundColor: 'rgba(6, 182, 212, 0.15)',
-  },
-  pinkIconBg: {
-    backgroundColor: 'rgba(236, 72, 153, 0.15)',
-  },
-  amberIconBg: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-  },
-  settingInfo: {
-    flex: 1,
-    marginLeft: 14,
-  },
-  settingTitle: {
-    ...typography.bodyLarge,
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  settingSubtitle: {
-    ...typography.bodySmall,
-    color: colors.textMuted,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.divider,
-    marginVertical: 14,
-  },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(139, 92, 246, 0.12)',
-    paddingVertical: 12,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.3)',
-  },
-  actionBtnText: {
-    ...typography.bodySmall,
-    color: colors.primaryLight,
-    fontWeight: '700',
-  },
-});
+function createStyles(colors: ColorTokens) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      paddingBottom: 120,
+    },
+    header: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 16,
+    },
+    headerTitle: {
+      ...typography.hero,
+      color: colors.text,
+      fontSize: 26,
+    },
+    sectionHeader: {
+      ...typography.h2,
+      color: colors.textSecondary,
+      fontSize: 14,
+      paddingHorizontal: 20,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    sectionCard: {
+      backgroundColor: colors.surfaceCard,
+      marginHorizontal: 20,
+      borderRadius: borderRadius.xl,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      ...shadows.soft,
+    },
+    appearanceRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    appearanceOption: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 14,
+      borderRadius: borderRadius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    appearanceOptionSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    appearanceLabel: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    appearanceLabelSelected: {
+      color: '#FFF',
+      fontWeight: '700',
+    },
+    settingItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    settingIconWrapper: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(139, 92, 246, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cyanIconBg: {
+      backgroundColor: 'rgba(6, 182, 212, 0.15)',
+    },
+    pinkIconBg: {
+      backgroundColor: 'rgba(236, 72, 153, 0.15)',
+    },
+    amberIconBg: {
+      backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    },
+    settingInfo: {
+      flex: 1,
+      marginLeft: 14,
+    },
+    settingTitle: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    settingSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: colors.divider,
+      marginVertical: 14,
+    },
+    actionBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      backgroundColor: 'rgba(139, 92, 246, 0.12)',
+      paddingVertical: 12,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: 'rgba(139, 92, 246, 0.3)',
+    },
+    actionBtnText: {
+      ...typography.bodySmall,
+      color: colors.primaryLight,
+      fontWeight: '700',
+    },
+  });
+}
 
 export default SettingsScreen;

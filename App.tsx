@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SystemBars } from 'react-native-edge-to-edge';
 import BootSplash from 'react-native-bootsplash';
@@ -10,19 +10,44 @@ import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { MiniPlayer } from './src/components/MiniPlayer';
 import { setupPlayer } from './src/services/audioService';
 import { useMusicStore } from './src/store/useMusicStore';
-import { colors } from './src/theme';
+import { ThemeProvider, useTheme } from './src/theme';
 
-const MoozyDarkNavTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: colors.background,
-    card: colors.surface,
-    text: colors.text,
-    border: colors.border,
-    primary: colors.primary,
-  },
-};
+/** Everything that needs the resolved Light/Dark/System palette lives below the ThemeProvider. */
+function AppContent(): React.JSX.Element {
+  const { colors, isDark } = useTheme();
+
+  const navTheme = useMemo(() => {
+    const base = isDark ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        primary: colors.primary,
+      },
+    };
+  }, [colors, isDark]);
+
+  return (
+    <SafeAreaProvider>
+      {/* Content now draws edge-to-edge; SystemBars only tints the icons/content
+          of the status & nav bars (mandatory replacement for <StatusBar> since
+          Android 15 deprecates its window-inset APIs). */}
+      <SystemBars style={isDark ? 'light' : 'dark'} />
+      <ErrorBoundary>
+        <NavigationContainer theme={navTheme}>
+          <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <AppNavigator />
+            <MiniPlayer />
+          </View>
+        </NavigationContainer>
+      </ErrorBoundary>
+    </SafeAreaProvider>
+  );
+}
 
 function App(): React.JSX.Element {
   useEffect(() => {
@@ -37,27 +62,15 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      {/* Content now draws edge-to-edge; SystemBars only tints the icons/content
-          of the status & nav bars (mandatory replacement for <StatusBar> since
-          Android 15 deprecates its window-inset APIs). */}
-      <SystemBars style="light" />
-      <ErrorBoundary>
-        <NavigationContainer theme={MoozyDarkNavTheme}>
-          <View style={styles.container}>
-            <AppNavigator />
-            <MiniPlayer />
-          </View>
-        </NavigationContainer>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
 });
 
