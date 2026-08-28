@@ -1,6 +1,7 @@
 import { PermissionsAndroid, Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import { Track } from '../types/music';
+import { hasNativeLibraryScanner, scanAudioFilesNative } from './nativeLibraryScanner';
 
 const SUPPORTED_EXTENSIONS = ['.mp3', '.m4a', '.wav', '.flac', '.aac', '.ogg'];
 
@@ -75,6 +76,21 @@ export async function scanLocalMusicFiles(): Promise<Track[]> {
   if (!hasPermission) {
     console.warn('Storage permission denied');
     return [];
+  }
+
+  // Prefer Android's MediaStore index (real title/artist/album/duration/art
+  // — see MediaScannerModule.kt) over walking the filesystem by hand. Falls
+  // through to the filesystem walk below on iOS, or if the native module is
+  // ever unavailable for some reason.
+  if (Platform.OS === 'android' && hasNativeLibraryScanner()) {
+    try {
+      const nativeTracks = await scanAudioFilesNative();
+      if (nativeTracks.length > 0) {
+        return nativeTracks;
+      }
+    } catch (e) {
+      console.warn('Native MediaStore scan failed, falling back to filesystem walk:', e);
+    }
   }
 
   const discoveredTracks: Track[] = [];

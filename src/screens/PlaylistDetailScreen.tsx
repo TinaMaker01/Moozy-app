@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   FlatList,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,6 +14,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { RootStackParamList } from '../types/navigation';
 import { MusicListItem } from '../components/MusicListItem';
+import { TrackArtwork } from '../components/TrackArtwork';
 import { EmptyState } from '../components/states/EmptyState';
 
 type PlaylistDetailRouteProp = RouteProp<RootStackParamList, 'PlaylistDetail'>;
@@ -95,14 +95,7 @@ export const PlaylistDetailScreen: React.FC = () => {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View style={styles.heroSection}>
-            <Image
-              source={{
-                uri:
-                  playlist.artwork ||
-                  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-              }}
-              style={styles.artwork}
-            />
+            <TrackArtwork uri={playlist.artwork} style={styles.artwork} iconSize={48} />
             <Text style={styles.playlistTitle}>{playlist.name}</Text>
             {playlist.description && (
               <Text style={styles.playlistDesc}>{playlist.description}</Text>

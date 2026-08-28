@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   FlatList,
-  Image,
   Modal,
   StyleSheet,
   Text,
@@ -20,6 +19,7 @@ import { borderRadius, ColorTokens, shadows, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { Track } from '../types/music';
+import { TrackArtwork } from './TrackArtwork';
 import { VisualizerBar } from './VisualizerBar';
 
 interface Props {
@@ -88,14 +88,7 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
                 <View style={styles.nowPlayingSection}>
                   <Text style={styles.sectionLabel}>EN COURS DE LECTURE</Text>
                   <View style={styles.activeTrackCard}>
-                    <Image
-                      source={{
-                        uri:
-                          currentTrack.artwork ||
-                          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-                      }}
-                      style={styles.activeThumb}
-                    />
+                    <TrackArtwork uri={currentTrack.artwork} style={styles.activeThumb} iconSize={18} />
                     <View style={styles.activeInfo}>
                       <Text style={styles.activeTitle} numberOfLines={1}>
                         {currentTrack.title}
@@ -136,14 +129,7 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
                           style={styles.trackInfoPressable}
                           onPress={() => handlePlayFromQueue(item)}
                         >
-                          <Image
-                            source={{
-                              uri:
-                                item.artwork ||
-                                'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-                            }}
-                            style={styles.queueThumb}
-                          />
+                          <TrackArtwork uri={item.artwork} style={styles.queueThumb} iconSize={16} />
                           <View style={styles.queueInfo}>
                             <Text style={styles.queueTitle} numberOfLines={1}>
                               {item.title}

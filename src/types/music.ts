@@ -4,12 +4,16 @@ export interface Track {
   title: string;
   artist: string;
   album?: string;
+  /** MediaStore album id, used to group tracks into albums and to resolve album art. Android-only. */
+  albumId?: string;
   duration?: number; // In seconds
   artwork?: string;
   genre?: string;
   isFavorite?: boolean;
   isLocal?: boolean;
   addedAt?: number;
+  /** Parent directory of the file on disk, used by the Library's Folders view. Android-only. */
+  folderPath?: string;
 }
 
 export interface Playlist {

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -21,6 +20,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { AudioService } from '../services/audioService';
 import { useMusicStore } from '../store/useMusicStore';
 import { RootStackParamList } from '../types/navigation';
+import { TrackArtwork } from './TrackArtwork';
 import { VisualizerBar } from './VisualizerBar';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -43,9 +43,6 @@ export const MiniPlayer: React.FC = () => {
   }
 
   const progressPercent = duration > 0 ? (position / duration) * 100 : 0;
-  const artworkUri =
-    track.artwork ||
-    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
 
   return (
     <TouchableOpacity
@@ -61,7 +58,7 @@ export const MiniPlayer: React.FC = () => {
       <View style={styles.container}>
         {/* Track Artwork */}
         <View style={styles.artworkContainer}>
-          <Image source={{ uri: artworkUri }} style={styles.artwork} />
+          <TrackArtwork uri={track.artwork} style={styles.artwork} iconSize={20} />
           {isPlaying && (
             <View style={styles.visualizerOverlay}>
               <VisualizerBar isPlaying={isPlaying} barCount={3} maxHeight={12} color="#FFFFFF" />

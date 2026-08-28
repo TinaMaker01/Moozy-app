@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,6 +10,7 @@ import { borderRadius, ColorTokens, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { Track } from '../types/music';
 import { useMusicStore } from '../store/useMusicStore';
+import { TrackArtwork } from './TrackArtwork';
 import { VisualizerBar } from './VisualizerBar';
 
 interface Props {
@@ -43,10 +43,6 @@ const MusicListItemComponent: React.FC<Props> = ({
   const toggleFavorite = useMusicStore((s) => s.toggleFavorite);
   const isFavorite = favorites.includes(track.id);
 
-  const artworkUri =
-    track.artwork ||
-    'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
-
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -58,7 +54,7 @@ const MusicListItemComponent: React.FC<Props> = ({
     >
       {/* Artwork with playing overlay */}
       <View style={styles.artworkContainer}>
-        <Image source={{ uri: artworkUri }} style={styles.artwork} />
+        <TrackArtwork uri={track.artwork} style={styles.artwork} iconSize={20} />
         {isActive && isPlaying && (
           <View style={styles.playingOverlay}>
             <VisualizerBar isPlaying={isPlaying} barCount={3} maxHeight={14} color="#FFFFFF" />

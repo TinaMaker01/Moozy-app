@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
   FlatList,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,6 +25,7 @@ import { useMusicStore } from '../store/useMusicStore';
 import { MoodCategory } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
 import { SleepTimerModal } from '../components/SleepTimerModal';
+import { TrackArtwork } from '../components/TrackArtwork';
 import { getTrackPalette } from '../utils/artworkColors';
 import { useLibraryScan } from '../hooks/useLibraryScan';
 
@@ -177,14 +177,7 @@ export const HomeScreen: React.FC = () => {
             style={styles.heroCard}
             onPress={() => playTrack(tracks[0], tracks)}
           >
-            <Image
-              source={{
-                uri:
-                  tracks[0].artwork ||
-                  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-              }}
-              style={styles.heroArtwork}
-            />
+            <TrackArtwork uri={tracks[0].artwork} style={styles.heroArtwork} iconSize={48} />
             <View style={styles.heroGradient}>
               <View style={[styles.heroBadge, { backgroundColor: activePalette.primary }]}>
                 <Sparkles size={12} color="#FFF" />
@@ -224,14 +217,7 @@ export const HomeScreen: React.FC = () => {
               onPress={() => playTrack(item, filteredTracks)}
             >
               <View style={styles.trackCardImageContainer}>
-                <Image
-                  source={{
-                    uri:
-                      item.artwork ||
-                      'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-                  }}
-                  style={styles.trackCardImage}
-                />
+                <TrackArtwork uri={item.artwork} style={styles.trackCardImage} iconSize={32} />
                 <View style={[styles.trackPlayOverlay, { backgroundColor: activePalette.primary }]}>
                   <Play size={16} color="#FFF" fill="#FFF" />
                 </View>
@@ -265,14 +251,7 @@ export const HomeScreen: React.FC = () => {
                 navigation.navigate('PlaylistDetail', { playlistId: item.id })
               }
             >
-              <Image
-                source={{
-                  uri:
-                    item.artwork ||
-                    'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80',
-                }}
-                style={styles.playlistImage}
-              />
+              <TrackArtwork uri={item.artwork} style={styles.playlistImage} iconSize={32} />
               <Text style={styles.playlistName} numberOfLines={1}>
                 {item.name}
               </Text>
@@ -296,14 +275,7 @@ export const HomeScreen: React.FC = () => {
                   style={styles.recentItem}
                   onPress={() => playTrack(t, recentlyPlayed)}
                 >
-                  <Image
-                    source={{
-                      uri:
-                        t.artwork ||
-                        'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-                    }}
-                    style={styles.recentThumb}
-                  />
+                  <TrackArtwork uri={t.artwork} style={styles.recentThumb} iconSize={18} />
                   <View style={styles.recentInfo}>
                     <Text style={styles.recentTitle} numberOfLines={1}>
                       {t.title}

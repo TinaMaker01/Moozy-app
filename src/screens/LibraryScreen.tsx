@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
+  Folder,
   FolderSync,
   Heart,
   ListMusic,
@@ -27,11 +28,31 @@ import { useMusicStore } from '../store/useMusicStore';
 import { Track } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
 import { MusicListItem } from '../components/MusicListItem';
+import { TrackArtwork } from '../components/TrackArtwork';
 import { TrackOptionsModal } from '../components/TrackOptionsModal';
 import { useLibraryScan } from '../hooks/useLibraryScan';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-type LibraryTab = 'tracks' | 'artists' | 'albums' | 'playlists' | 'favorites';
+type LibraryTab = 'tracks' | 'artists' | 'albums' | 'folders' | 'playlists' | 'favorites';
+type SortOption = 'title' | 'artist' | 'recent';
+
+const SORT_OPTIONS: { id: SortOption; label: string }[] = [
+  { id: 'title', label: 'Titre' },
+  { id: 'artist', label: 'Artiste' },
+  { id: 'recent', label: 'Récemment ajouté' },
+];
+
+function sortTracks(list: Track[], sortBy: SortOption): Track[] {
+  const sorted = [...list];
+  if (sortBy === 'title') {
+    sorted.sort((a, b) => a.title.localeCompare(b.title));
+  } else if (sortBy === 'artist') {
+    sorted.sort((a, b) => a.artist.localeCompare(b.artist));
+  } else {
+    sorted.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+  }
+  return sorted;
+}
 
 export const LibraryScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -40,6 +61,7 @@ export const LibraryScreen: React.FC = () => {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [activeTab, setActiveTab] = useState<LibraryTab>('tracks');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('title');
   const [selectedOptionTrack, setSelectedOptionTrack] = useState<Track | null>(null);
   const { isScanning, scan } = useLibraryScan();
 
@@ -52,19 +74,19 @@ export const LibraryScreen: React.FC = () => {
   const playlists = useMusicStore((s) => s.playlists);
   const playTrack = useMusicStore((s) => s.playTrack);
 
-  // Filter based on search query
+  // Filter + sort based on search query and the chosen sort order.
   const query = searchQuery.trim().toLowerCase();
   const filteredTracks = useMemo(() => {
-    if (!query) {
-      return tracks;
-    }
-    return tracks.filter(
-      (t) =>
-        t.title.toLowerCase().includes(query) ||
-        t.artist.toLowerCase().includes(query) ||
-        (t.album && t.album.toLowerCase().includes(query))
-    );
-  }, [tracks, query]);
+    const base = !query
+      ? tracks
+      : tracks.filter(
+          (t) =>
+            t.title.toLowerCase().includes(query) ||
+            t.artist.toLowerCase().includes(query) ||
+            (t.album && t.album.toLowerCase().includes(query))
+        );
+    return sortTracks(base, sortBy);
+  }, [tracks, query, sortBy]);
 
   const favoriteTracks = useMemo(
     () => filteredTracks.filter((t) => favorites.includes(t.id)),
@@ -104,6 +126,26 @@ export const LibraryScreen: React.FC = () => {
       tracks: trks,
     }));
   }, [tracks]);
+
+  // Extract folders (Android only — local scans set folderPath from the
+  // MediaStore file path; demo/remote tracks fall into a single bucket).
+  const foldersList = useMemo(() => {
+    const foldersMap = new Map<string, Track[]>();
+    tracks.forEach((t) => {
+      const folder = t.folderPath || 'Autres morceaux';
+      const list = foldersMap.get(folder) || [];
+      list.push(t);
+      foldersMap.set(folder, list);
+    });
+    return Array.from(foldersMap.entries()).map(([folder, trks]) => ({
+      folder,
+      label: folder.split('/').filter(Boolean).pop() || folder,
+      count: trks.length,
+      tracks: trks,
+    }));
+  }, [tracks]);
+
+  const showSortControl = activeTab === 'tracks' || activeTab === 'favorites';
 
   const renderContent = () => {
     if (activeTab === 'tracks') {
@@ -196,13 +238,48 @@ export const LibraryScreen: React.FC = () => {
               style={styles.cardItem}
               onPress={() => playTrack(item.tracks[0], item.tracks)}
             >
-              <View style={styles.albumCover}>
-                <Music size={24} color={colors.secondary} />
-              </View>
+              <TrackArtwork uri={item.artwork} style={styles.albumCover} iconSize={20} />
               <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle}>{item.album}</Text>
                 <Text style={styles.cardSubtitle}>
                   {item.artist} • {item.count} pistes
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      );
+    }
+
+    if (activeTab === 'folders') {
+      return (
+        <FlatList
+          data={foldersList}
+          keyExtractor={(item) => item.folder}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Folder size={48} color={colors.textMuted} />
+              <Text style={styles.emptyTitle}>Aucun dossier</Text>
+              <Text style={styles.emptySubtitle}>
+                Scannez votre stockage pour voir vos morceaux classés par dossier.
+              </Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.cardItem}
+              onPress={() => playTrack(item.tracks[0], item.tracks)}
+            >
+              <View style={styles.folderIcon}>
+                <Folder size={24} color={colors.primaryLight} />
+              </View>
+              <View style={styles.cardInfo}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.label}
+                </Text>
+                <Text style={styles.cardSubtitle} numberOfLines={1}>
+                  {item.count} pistes
                 </Text>
               </View>
             </TouchableOpacity>
@@ -289,6 +366,7 @@ export const LibraryScreen: React.FC = () => {
             { id: 'favorites', label: `Favoris (${favorites.length})` },
             { id: 'artists', label: `Artistes (${artistsList.length})` },
             { id: 'albums', label: `Albums (${albumsList.length})` },
+            { id: 'folders', label: `Dossiers (${foldersList.length})` },
             { id: 'playlists', label: `Playlists (${playlists.length})` },
           ] as { id: LibraryTab; label: string }[]
         ).map((t) => {
@@ -311,6 +389,33 @@ export const LibraryScreen: React.FC = () => {
           );
         })}
       </ScrollView>
+
+      {/* Sort Control — only meaningful for the flat track lists */}
+      {showSortControl && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.sortRow}
+        >
+          <Text style={styles.sortLabel}>Trier :</Text>
+          {SORT_OPTIONS.map((opt) => {
+            const isSelected = sortBy === opt.id;
+            return (
+              <TouchableOpacity
+                key={opt.id}
+                style={[styles.sortChip, isSelected && styles.sortChipSelected]}
+                onPress={() => setSortBy(opt.id)}
+              >
+                <Text
+                  style={[styles.sortChipText, isSelected && styles.sortChipTextSelected]}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {/* Main List Body */}
       {renderContent()}
@@ -398,6 +503,38 @@ function createStyles(colors: ColorTokens) {
       color: '#FFF',
       fontWeight: '700',
     },
+    sortRow: {
+      paddingHorizontal: 20,
+      alignItems: 'center',
+      gap: 8,
+      paddingBottom: 10,
+    },
+    sortLabel: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      marginRight: 2,
+    },
+    sortChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: borderRadius.round,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    sortChipSelected: {
+      backgroundColor: colors.activeTrackBg,
+      borderColor: colors.primary,
+    },
+    sortChipText: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+    },
+    sortChipTextSelected: {
+      color: colors.primaryLight,
+      fontWeight: '700',
+    },
     listContent: {
       paddingBottom: 120,
     },
@@ -457,7 +594,12 @@ function createStyles(colors: ColorTokens) {
       width: 48,
       height: 48,
       borderRadius: borderRadius.md,
-      backgroundColor: 'rgba(6, 182, 212, 0.15)',
+    },
+    folderIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: borderRadius.md,
+      backgroundColor: 'rgba(139, 92, 246, 0.15)',
       alignItems: 'center',
       justifyContent: 'center',
     },

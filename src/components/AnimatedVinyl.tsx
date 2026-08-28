@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
-  Image,
   StyleSheet,
   View,
 } from 'react-native';
 import { borderRadius, ColorTokens, shadows } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
+import { TrackArtwork } from './TrackArtwork';
 
 interface Props {
   isPlaying: boolean;
@@ -67,9 +67,6 @@ export const AnimatedVinyl: React.FC<Props> = ({
     outputRange: ['0deg', '360deg'],
   });
 
-  const defaultImage =
-    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
-
   if (mode === 'card') {
     return (
       <View style={[styles.cardContainer, { width: size, height: size }]}>
@@ -82,11 +79,7 @@ export const AnimatedVinyl: React.FC<Props> = ({
             },
           ]}
         >
-          <Image
-            source={{ uri: artworkUri || defaultImage }}
-            style={styles.cardImage}
-            resizeMode="cover"
-          />
+          <TrackArtwork uri={artworkUri} style={styles.cardImage} iconSize={size * 0.3} />
         </Animated.View>
       </View>
     );
@@ -124,11 +117,7 @@ export const AnimatedVinyl: React.FC<Props> = ({
             },
           ]}
         >
-          <Image
-            source={{ uri: artworkUri || defaultImage }}
-            style={styles.centerImage}
-            resizeMode="cover"
-          />
+          <TrackArtwork uri={artworkUri} style={styles.centerImage} iconSize={size * 0.15} />
           {/* Vinyl center spindle hole */}
           <View style={styles.spindleHole} />
         </View>

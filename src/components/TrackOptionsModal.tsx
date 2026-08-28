@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  Image,
   Modal,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
 import {
   CornerDownRight,
   Heart,
+  ListMusic,
   ListPlus,
   Play,
   X,
@@ -19,6 +19,8 @@ import { borderRadius, ColorTokens, shadows, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { Track } from '../types/music';
+import { TrackArtwork } from './TrackArtwork';
+import { EmptyState } from './states/EmptyState';
 
 interface Props {
   track: Track | null;
@@ -33,11 +35,20 @@ export const TrackOptionsModal: React.FC<Props> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [choosingPlaylist, setChoosingPlaylist] = React.useState(false);
   const favorites = useMusicStore((s) => s.favorites);
+  const playlists = useMusicStore((s) => s.playlists);
   const toggleFavorite = useMusicStore((s) => s.toggleFavorite);
   const playNextTrack = useMusicStore((s) => s.playNextTrack);
   const addToQueue = useMusicStore((s) => s.addToQueue);
+  const addTrackToPlaylist = useMusicStore((s) => s.addTrackToPlaylist);
   const playTrack = useMusicStore((s) => s.playTrack);
+
+  // Reset the sub-view whenever a different track is opened, so the modal
+  // doesn't reopen mid-way through a previous "add to playlist" pick.
+  React.useEffect(() => {
+    setChoosingPlaylist(false);
+  }, [track?.id]);
 
   if (!track) {
     return null;
@@ -65,6 +76,11 @@ export const TrackOptionsModal: React.FC<Props> = ({
     onClose();
   };
 
+  const handleAddToPlaylist = (playlistId: string) => {
+    addTrackToPlaylist(playlistId, track.id);
+    onClose();
+  };
+
   return (
     <Modal
       visible={visible}
@@ -80,14 +96,7 @@ export const TrackOptionsModal: React.FC<Props> = ({
             <View style={styles.card}>
               {/* Header with track preview */}
               <View style={styles.trackHeader}>
-                <Image
-                  source={{
-                    uri:
-                      track.artwork ||
-                      'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-                  }}
-                  style={styles.artwork}
-                />
+                <TrackArtwork uri={track.artwork} style={styles.artwork} iconSize={20} />
                 <View style={styles.headerInfo}>
                   <Text style={styles.title} numberOfLines={1}>
                     {track.title}
@@ -103,54 +112,91 @@ export const TrackOptionsModal: React.FC<Props> = ({
 
               <View style={styles.divider} />
 
-              {/* Action List */}
-              <View style={styles.actionsList}>
-                <TouchableOpacity
-                  style={styles.actionRow}
-                  onPress={handlePlayNow}
-                >
-                  <View style={styles.iconCircle}>
-                    <Play size={18} color={colors.primaryLight} />
-                  </View>
-                  <Text style={styles.actionText}>Écouter immédiatement</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.actionRow}
-                  onPress={handlePlayNext}
-                >
-                  <View style={styles.iconCircle}>
-                    <CornerDownRight size={18} color={colors.secondary} />
-                  </View>
-                  <Text style={styles.actionText}>Lire juste après</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.actionRow}
-                  onPress={handleAddToQueue}
-                >
-                  <View style={styles.iconCircle}>
-                    <ListPlus size={18} color={colors.primaryLight} />
-                  </View>
-                  <Text style={styles.actionText}>Ajouter à la file d'attente</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.actionRow}
-                  onPress={handleToggleFav}
-                >
-                  <View style={styles.iconCircle}>
-                    <Heart
-                      size={18}
-                      color={isFavorite ? colors.accent : colors.textSecondary}
-                      fill={isFavorite ? colors.accent : 'transparent'}
+              {choosingPlaylist ? (
+                /* Playlist Picker Sub-view */
+                <View style={styles.actionsList}>
+                  {playlists.length === 0 ? (
+                    <EmptyState
+                      title="Aucune playlist"
+                      message="Créez-en une depuis la Bibliothèque pour pouvoir y ajouter ce morceau."
                     />
-                  </View>
-                  <Text style={styles.actionText}>
-                    {isFavorite ? 'Retirer des Coups de Cœur' : 'Ajouter aux Coups de Cœur'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                  ) : (
+                    playlists.map((pl) => (
+                      <TouchableOpacity
+                        key={pl.id}
+                        style={styles.actionRow}
+                        onPress={() => handleAddToPlaylist(pl.id)}
+                      >
+                        <View style={styles.iconCircle}>
+                          <ListMusic size={18} color={colors.accent} />
+                        </View>
+                        <Text style={styles.actionText} numberOfLines={1}>
+                          {pl.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </View>
+              ) : (
+                /* Action List */
+                <View style={styles.actionsList}>
+                  <TouchableOpacity
+                    style={styles.actionRow}
+                    onPress={handlePlayNow}
+                  >
+                    <View style={styles.iconCircle}>
+                      <Play size={18} color={colors.primaryLight} />
+                    </View>
+                    <Text style={styles.actionText}>Écouter immédiatement</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.actionRow}
+                    onPress={handlePlayNext}
+                  >
+                    <View style={styles.iconCircle}>
+                      <CornerDownRight size={18} color={colors.secondary} />
+                    </View>
+                    <Text style={styles.actionText}>Lire juste après</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.actionRow}
+                    onPress={handleAddToQueue}
+                  >
+                    <View style={styles.iconCircle}>
+                      <ListPlus size={18} color={colors.primaryLight} />
+                    </View>
+                    <Text style={styles.actionText}>Ajouter à la file d'attente</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.actionRow}
+                    onPress={() => setChoosingPlaylist(true)}
+                  >
+                    <View style={styles.iconCircle}>
+                      <ListMusic size={18} color={colors.accent} />
+                    </View>
+                    <Text style={styles.actionText}>Ajouter à une playlist</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.actionRow}
+                    onPress={handleToggleFav}
+                  >
+                    <View style={styles.iconCircle}>
+                      <Heart
+                        size={18}
+                        color={isFavorite ? colors.accent : colors.textSecondary}
+                        fill={isFavorite ? colors.accent : 'transparent'}
+                      />
+                    </View>
+                    <Text style={styles.actionText}>
+                      {isFavorite ? 'Retirer des Coups de Cœur' : 'Ajouter aux Coups de Cœur'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </TouchableWithoutFeedback>
         </View>
