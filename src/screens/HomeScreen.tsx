@@ -74,8 +74,20 @@ export const HomeScreen: React.FC = () => {
     return 'Bonsoir 🌙';
   };
 
+  // Once the user has real local music, stop surfacing the demo/remote
+  // tracks here — they need network to load art and stream audio, so
+  // they'd silently fail offline (auto-skipped by playbackService's
+  // PlaybackError handler, but still a broken-feeling suggestion to show).
+  // Demo tracks stay in the store either way — Favorites and the two
+  // seeded demo playlists still work if opened explicitly.
+  const hasLocalTracks = useMemo(() => tracks.some((t) => t.isLocal), [tracks]);
+  const homeTracks = useMemo(
+    () => (hasLocalTracks ? tracks.filter((t) => t.isLocal) : tracks),
+    [tracks, hasLocalTracks]
+  );
+
   const filteredTracks = useMemo(() => {
-    return tracks.filter((t) => {
+    return homeTracks.filter((t) => {
       if (selectedMood === 'all') {
         return true;
       }
@@ -90,7 +102,7 @@ export const HomeScreen: React.FC = () => {
       }
       return true;
     });
-  }, [tracks, selectedMood]);
+  }, [homeTracks, selectedMood]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -171,23 +183,23 @@ export const HomeScreen: React.FC = () => {
         </ScrollView>
 
         {/* Hero Featured Music Card */}
-        {tracks.length > 0 && (
+        {homeTracks.length > 0 && (
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.heroCard}
-            onPress={() => playTrack(tracks[0], tracks)}
+            onPress={() => playTrack(homeTracks[0], homeTracks)}
           >
-            <TrackArtwork uri={tracks[0].artwork} style={styles.heroArtwork} iconSize={48} />
+            <TrackArtwork uri={homeTracks[0].artwork} style={styles.heroArtwork} iconSize={48} />
             <View style={styles.heroGradient}>
               <View style={[styles.heroBadge, { backgroundColor: activePalette.primary }]}>
                 <Sparkles size={12} color="#FFF" />
                 <Text style={styles.heroBadgeText}>SUGGESTION DU MOMENT</Text>
               </View>
               <Text style={styles.heroTitle} numberOfLines={1}>
-                {tracks[0].title}
+                {homeTracks[0].title}
               </Text>
               <Text style={styles.heroArtist} numberOfLines={1}>
-                {tracks[0].artist}
+                {homeTracks[0].artist}
               </Text>
 
               <View style={[styles.heroPlayButton, { backgroundColor: activePalette.primary }]}>

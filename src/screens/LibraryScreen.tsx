@@ -61,6 +61,19 @@ const SORT_OPTIONS: { id: SortOption; label: string }[] = [
   { id: 'recent', label: 'Récemment ajouté' },
 ];
 
+// Tuned for a library that can hold several thousand tracks: render fewer
+// rows per batch and keep a smaller offscreen window than the defaults, and
+// let Android drop offscreen rows' native views entirely rather than just
+// hiding them. Applied to the lists bound directly to the raw track array
+// (Tracks/Favorites/search) — the grouped Artists/Albums/Folders/Playlists
+// lists are naturally much shorter, so their defaults are fine.
+const LARGE_LIST_PERF_PROPS = {
+  initialNumToRender: 12,
+  maxToRenderPerBatch: 12,
+  windowSize: 7,
+  removeClippedSubviews: true,
+} as const;
+
 function sortTracks(list: Track[], sortBy: SortOption): Track[] {
   const sorted = [...list];
   if (sortBy === 'title') {
@@ -205,6 +218,7 @@ export const LibraryScreen: React.FC = () => {
 
     return (
       <SectionList<any, SearchSection>
+        {...LARGE_LIST_PERF_PROPS}
         sections={searchSections}
         keyExtractor={(item, index) => {
           const anyItem = item as { id?: string; album?: string; artist?: string };
@@ -296,6 +310,7 @@ export const LibraryScreen: React.FC = () => {
     if (activeTab === 'tracks') {
       return (
         <FlatList
+          {...LARGE_LIST_PERF_PROPS}
           data={filteredTracks}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
@@ -324,6 +339,7 @@ export const LibraryScreen: React.FC = () => {
     if (activeTab === 'favorites') {
       return (
         <FlatList
+          {...LARGE_LIST_PERF_PROPS}
           data={favoriteTracks}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}

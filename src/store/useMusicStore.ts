@@ -74,7 +74,15 @@ export const INITIAL_DEMO_TRACKS: Track[] = [
 ];
 
 function persistQueue(queue: Track[]) {
-  AsyncStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue)).catch(console.warn);
+  // Only the ids are written, not the full Track objects — the objects
+  // themselves already live in TRACKS_STORAGE_KEY, and re-serializing all
+  // of them (title/artist/album/artwork URL...) into a second key on every
+  // single queue mutation would mean writing a multi-thousand-entry JSON
+  // blob to disk each time a large "play all" queue is touched, rather
+  // than a lightweight array of ids resolved back against tracks on restore.
+  AsyncStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue.map((t) => t.id))).catch(
+    console.warn
+  );
 }
 
 interface MusicStoreState {
@@ -200,7 +208,16 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
       // already in place here.
       if (currentTrackJson && useSettingsStore.getState().resumeOnStartup) {
         const restoredTrack: Track = JSON.parse(currentTrackJson);
-        const restoredQueue: Track[] = queueJson ? JSON.parse(queueJson) : [restoredTrack];
+        // The queue was persisted as ids only (see persistQueue) — resolve
+        // them back against the tracks just restored above. A ghost id
+        // (deleted/moved file since last session) is skipped rather than
+        // breaking the whole restore.
+        const queueIds: string[] = queueJson ? JSON.parse(queueJson) : [];
+        const trackMap = new Map(get().tracks.map((t) => [t.id, t]));
+        const resolvedQueue = queueIds
+          .map((id) => trackMap.get(id))
+          .filter((t): t is Track => !!t);
+        const restoredQueue: Track[] = resolvedQueue.length > 0 ? resolvedQueue : [restoredTrack];
         const restoredRepeat: RepeatMode = repeatModeJson ? JSON.parse(repeatModeJson) : 'off';
         const restoredShuffle: boolean = shuffleJson ? JSON.parse(shuffleJson) : false;
         const restoredPosition: number = positionJson ? JSON.parse(positionJson) : 0;
@@ -258,11 +275,12 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     });
 
     // Persist history + the session itself (so killing/reopening the app
-    // resumes here instead of losing track of what was playing).
+    // resumes here instead of losing track of what was playing). The queue
+    // is stored as ids only — see persistQueue's comment above.
     AsyncStorage.multiSet([
       [HISTORY_STORAGE_KEY, JSON.stringify(get().recentlyPlayed)],
       [CURRENT_TRACK_STORAGE_KEY, JSON.stringify(track)],
-      [QUEUE_STORAGE_KEY, JSON.stringify(effectiveQueue)],
+      [QUEUE_STORAGE_KEY, JSON.stringify(effectiveQueue.map((t) => t.id))],
       [PLAYBACK_POSITION_STORAGE_KEY, '0'],
     ]).catch(console.warn);
 

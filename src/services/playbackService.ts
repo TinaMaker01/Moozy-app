@@ -19,6 +19,20 @@ export default async function playbackService() {
     }
   });
 
+  // A track that fails to load (file deleted/moved since it was scanned, a
+  // remote demo track with no network, a corrupted file) previously just
+  // stalled playback with no feedback at all. Skip to the next track
+  // instead — one bad file shouldn't block the rest of the queue.
+  TrackPlayer.addEventListener(Event.PlaybackError, async (error) => {
+    console.warn('Moozy playback error, skipping to the next track:', error);
+    try {
+      await TrackPlayer.skipToNext();
+    } catch (e) {
+      // No next track to fall back to (e.g. a single-track queue) —
+      // nothing more this handler can do.
+    }
+  });
+
   // Periodically (see progressUpdateEventInterval in audioService.ts)
   // persists how far into the current track playback has gotten, so a
   // killed-and-reopened app can resume close to where it left off instead

@@ -35,6 +35,7 @@ module.exports = {
     RemoteStop: 'remote-stop',
     RemoteDuck: 'remote-duck',
     PlaybackProgressUpdated: 'playback-progress-updated',
+    PlaybackError: 'playback-error',
   },
   State: {
     None: 'none',
