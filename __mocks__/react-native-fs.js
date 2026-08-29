@@ -8,5 +8,6 @@ module.exports = {
     MainBundlePath: '/bundle',
     exists: jest.fn(() => Promise.resolve(false)),
     readDir: jest.fn(() => Promise.resolve([])),
+    readFile: jest.fn(() => Promise.resolve('')),
   },
 };

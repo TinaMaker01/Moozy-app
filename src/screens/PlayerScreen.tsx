@@ -21,6 +21,7 @@ import {
   Disc,
   Heart,
   ListMusic,
+  MicVocal,
   Moon,
   Pause,
   Play,
@@ -41,6 +42,7 @@ import { AnimatedVinyl } from '../components/AnimatedVinyl';
 import { VisualizerBar } from '../components/VisualizerBar';
 import { SleepTimerModal } from '../components/SleepTimerModal';
 import { QueueModal } from '../components/QueueModal';
+import { LyricsModal } from '../components/LyricsModal';
 import { getTrackPalette } from '../utils/artworkColors';
 
 const { width } = Dimensions.get('window');
@@ -63,6 +65,7 @@ export const PlayerScreen: React.FC = () => {
   const [displayMode, setDisplayMode] = useState<'vinyl' | 'card'>('vinyl');
   const [sleepModalVisible, setSleepModalVisible] = useState(false);
   const [queueModalVisible, setQueueModalVisible] = useState(false);
+  const [lyricsModalVisible, setLyricsModalVisible] = useState(false);
   const [isSliding, setIsSliding] = useState(false);
   const [slidingValue, setSlidingValue] = useState(0);
 
@@ -304,6 +307,14 @@ export const PlayerScreen: React.FC = () => {
 
         <TouchableOpacity
           style={styles.toolBtn}
+          onPress={() => setLyricsModalVisible(true)}
+        >
+          <MicVocal size={18} color={colors.textSecondary} />
+          <Text style={styles.toolText}>Paroles</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.toolBtn}
           onPress={() => setSleepModalVisible(true)}
         >
           <Moon size={18} color={colors.textSecondary} />
@@ -315,6 +326,11 @@ export const PlayerScreen: React.FC = () => {
       <SleepTimerModal
         visible={sleepModalVisible}
         onClose={() => setSleepModalVisible(false)}
+      />
+
+      <LyricsModal
+        visible={lyricsModalVisible}
+        onClose={() => setLyricsModalVisible(false)}
       />
 
       <QueueModal
