@@ -49,6 +49,8 @@ export const MiniPlayer: React.FC = () => {
       activeOpacity={0.92}
       onPress={() => navigation.navigate('Player')}
       style={[styles.wrapper, { marginBottom: insets.bottom + 8 }]}
+      accessibilityRole="button"
+      accessibilityLabel={`Ouvrir le lecteur, ${track.title} par ${track.artist}`}
     >
       {/* Top progress line */}
       <View style={styles.progressBarBackground}>
@@ -84,6 +86,9 @@ export const MiniPlayer: React.FC = () => {
               e.stopPropagation();
               AudioService.togglePlayPause();
             }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={isPlaying ? 'Mettre en pause' : 'Lire'}
           >
             {isPlaying ? (
               <Pause size={20} color={colors.text} fill={colors.text} />
@@ -98,6 +103,9 @@ export const MiniPlayer: React.FC = () => {
               e.stopPropagation();
               AudioService.skipToNext();
             }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Morceau suivant"
           >
             <SkipForward size={22} color={colors.textSecondary} />
           </TouchableOpacity>

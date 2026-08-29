@@ -58,6 +58,9 @@ export const EqualizerScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel="Retour"
           >
             <ChevronLeft size={22} color={colors.text} />
           </TouchableOpacity>
@@ -70,6 +73,9 @@ export const EqualizerScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.resetBtn}
             onPress={() => setEqualizerPreset('Flat')}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel="Réinitialiser l'égaliseur"
           >
             <RotateCcw size={18} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -132,6 +138,8 @@ export const EqualizerScreen: React.FC = () => {
                       maximumTrackTintColor={colors.progressBarBg}
                       thumbTintColor={colors.primaryLight}
                       onValueChange={(newGain) => setBandGain(b.key, newGain)}
+                      accessibilityLabel={`Bande ${b.label}`}
+                      accessibilityValue={{ min: -10, max: 10, now: val }}
                     />
                   </View>
                   <Text style={styles.bandLabel}>{b.label}</Text>
@@ -169,6 +177,8 @@ export const EqualizerScreen: React.FC = () => {
             maximumTrackTintColor={colors.progressBarBg}
             thumbTintColor={colors.accent}
             onValueChange={setBassBoost}
+            accessibilityLabel="Amplification des basses"
+            accessibilityValue={{ min: 0, max: 100, now: equalizer.bassBoost }}
           />
         </View>
 
@@ -197,6 +207,8 @@ export const EqualizerScreen: React.FC = () => {
             maximumTrackTintColor={colors.progressBarBg}
             thumbTintColor={colors.secondary}
             onValueChange={setVirtualizer}
+            accessibilityLabel="Spatialisation 3D"
+            accessibilityValue={{ min: 0, max: 100, now: equalizer.virtualizer }}
           />
         </View>
       </ScrollView>

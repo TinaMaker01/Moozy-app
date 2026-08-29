@@ -31,7 +31,11 @@ export const darkColors = {
   // Typography
   text: '#FFFFFF',
   textSecondary: '#94A3B8',
-  textMuted: '#64748B',
+  // Was #64748B — computed contrast against this background is ~4.16:1,
+  // under WCAG AA's 4.5:1 minimum for normal-size text (this is used for
+  // durations, hints, captions — all well under 18pt). Lightened to a
+  // measured ~5.4:1.
+  textMuted: '#7387A3',
   textInverse: '#080A0F',
 
   // UI States
@@ -76,7 +80,10 @@ export const lightColors: ColorTokens = {
 
   text: '#12141F',
   textSecondary: '#4B5065',
-  textMuted: '#868CA0',
+  // Was #868CA0 — computed contrast against this background is ~3.1:1,
+  // under WCAG AA's 4.5:1 minimum for normal-size text. Darkened to a
+  // measured ~4.8:1.
+  textMuted: '#666D7A',
   textInverse: '#FFFFFF',
 
   activeTrackBg: 'rgba(124, 58, 237, 0.10)',

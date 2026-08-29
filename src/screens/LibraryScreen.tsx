@@ -570,7 +570,12 @@ export const LibraryScreen: React.FC = () => {
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')} accessibilityLabel="Effacer la recherche">
+          <TouchableOpacity
+            onPress={() => setSearchQuery('')}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Effacer la recherche"
+          >
             <X size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
@@ -600,6 +605,8 @@ export const LibraryScreen: React.FC = () => {
                 key={t.id}
                 style={[styles.tabChip, isSelected && styles.tabChipSelected]}
                 onPress={() => setActiveTab(t.id)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isSelected }}
               >
                 <Text
                   style={[
@@ -630,6 +637,8 @@ export const LibraryScreen: React.FC = () => {
                 key={opt.id}
                 style={[styles.sortChip, isSelected && styles.sortChipSelected]}
                 onPress={() => setSortBy(opt.id)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
               >
                 <Text
                   style={[styles.sortChipText, isSelected && styles.sortChipTextSelected]}

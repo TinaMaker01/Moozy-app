@@ -53,6 +53,9 @@ const MusicListItemComponent: React.FC<Props> = ({
         isActive && styles.activeContainer,
       ]}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${track.title}, ${track.artist}`}
+      accessibilityState={{ selected: isActive }}
     >
       {/* Artwork with playing overlay */}
       <View style={styles.artworkContainer}>
@@ -86,6 +89,9 @@ const MusicListItemComponent: React.FC<Props> = ({
           onPress={() => toggleFavorite(track.id)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={styles.heartButton}
+          accessibilityRole="button"
+          accessibilityLabel={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          accessibilityState={{ selected: isFavorite }}
         >
           <Heart
             size={18}
@@ -99,6 +105,8 @@ const MusicListItemComponent: React.FC<Props> = ({
             onPress={onOptionsPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             style={styles.moreButton}
+            accessibilityRole="button"
+            accessibilityLabel="Plus d’options"
           >
             <MoreVertical size={18} color={colors.textMuted} />
           </TouchableOpacity>

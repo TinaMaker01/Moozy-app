@@ -325,6 +325,8 @@ export const SettingsScreen: React.FC = () => {
                   key={opt.id}
                   style={[styles.smallChip, isSelected && styles.smallChipSelected]}
                   onPress={() => setDefaultSort(opt.id)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
                 >
                   <Text
                     style={[styles.smallChipText, isSelected && styles.smallChipTextSelected]}
@@ -415,6 +417,8 @@ export const SettingsScreen: React.FC = () => {
                   key={opt.id}
                   style={[styles.smallChip, isSelected && styles.smallChipSelected]}
                   onPress={() => setListDensity(opt.id)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
                 >
                   <Text
                     style={[styles.smallChipText, isSelected && styles.smallChipTextSelected]}

@@ -48,7 +48,13 @@ export const LyricsModal: React.FC<Props> = ({ visible, onClose }) => {
                   <MicVocal size={20} color={colors.primaryLight} />
                   <Text style={styles.title}>Paroles</Text>
                 </View>
-                <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                <TouchableOpacity
+                  onPress={onClose}
+                  style={styles.closeBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Fermer les paroles"
+                >
                   <X size={22} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
@@ -158,6 +164,8 @@ const LyricsContent: React.FC = () => {
           <TouchableOpacity
             style={styles.lineRow}
             onPress={() => AudioService.seekTo(item.time)}
+            accessibilityRole="button"
+            accessibilityLabel={`Aller à : ${item.text || 'passage instrumental'}`}
           >
             <Text style={[styles.lineText, isActive && styles.lineTextActive]}>
               {item.text || '♪'}

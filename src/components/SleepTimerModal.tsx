@@ -59,7 +59,13 @@ export const SleepTimerModal: React.FC<Props> = ({ visible, onClose }) => {
                   <Moon size={22} color={colors.primaryLight} />
                   <Text style={styles.title}>Minuteur de Sommeil</Text>
                 </View>
-                <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                <TouchableOpacity
+                  onPress={onClose}
+                  style={styles.closeBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Fermer"
+                >
                   <X size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>

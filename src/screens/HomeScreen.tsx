@@ -128,6 +128,9 @@ export const HomeScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => setSleepModalVisible(true)}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              accessibilityRole="button"
+              accessibilityLabel="Minuteur de sommeil"
             >
               <Moon size={20} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -135,6 +138,9 @@ export const HomeScreen: React.FC = () => {
               style={styles.iconBtn}
               onPress={scan}
               disabled={isScanning}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              accessibilityRole="button"
+              accessibilityLabel="Scanner le stockage"
             >
               <FolderSync
                 size={20}
@@ -164,6 +170,8 @@ export const HomeScreen: React.FC = () => {
                   },
                 ]}
                 onPress={() => setSelectedMood(m.id)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
               >
                 <Icon
                   size={15}

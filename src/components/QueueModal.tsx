@@ -77,7 +77,13 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
                       <Text style={styles.clearBtnText}>Vider</Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={styles.closeBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Fermer la file d'attente"
+                  >
                     <X size={22} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
@@ -128,6 +134,8 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
                         <TouchableOpacity
                           style={styles.trackInfoPressable}
                           onPress={() => handlePlayFromQueue(item)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${item.title}, ${item.artist}`}
                         >
                           <TrackArtwork uri={item.artwork} style={styles.queueThumb} iconSize={16} />
                           <View style={styles.queueInfo}>
@@ -146,6 +154,9 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
                             style={[styles.reorderBtn, !canMoveUp && styles.btnDisabled]}
                             disabled={!canMoveUp}
                             onPress={() => moveQueueItem(globalIdx, globalIdx - 1)}
+                            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Déplacer vers le haut"
                           >
                             <ChevronUp
                               size={18}
@@ -157,6 +168,9 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
                             style={[styles.reorderBtn, !canMoveDown && styles.btnDisabled]}
                             disabled={!canMoveDown}
                             onPress={() => moveQueueItem(globalIdx, globalIdx + 1)}
+                            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Déplacer vers le bas"
                           >
                             <ChevronDown
                               size={18}
@@ -167,6 +181,9 @@ export const QueueModal: React.FC<Props> = ({ visible, onClose }) => {
                           <TouchableOpacity
                             style={styles.removeBtn}
                             onPress={() => removeFromQueue(globalIdx)}
+                            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Retirer de la file d'attente"
                           >
                             <X size={16} color={colors.textMuted} />
                           </TouchableOpacity>

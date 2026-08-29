@@ -72,6 +72,9 @@ export const PlaylistDetailScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel="Retour"
           >
             <ChevronLeft size={24} color={colors.text} />
           </TouchableOpacity>
@@ -132,6 +135,9 @@ export const PlaylistDetailScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Retour"
         >
           <ChevronLeft size={24} color={colors.text} />
         </TouchableOpacity>
@@ -141,6 +147,8 @@ export const PlaylistDetailScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.backBtn}
           onPress={handleOpenOptions}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
           accessibilityLabel="Options de la playlist"
         >
           <MoreVertical size={20} color={colors.text} />

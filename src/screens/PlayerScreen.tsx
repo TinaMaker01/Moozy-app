@@ -122,6 +122,9 @@ export const PlayerScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.circleBtn}
           onPress={() => navigation.goBack()}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Fermer le lecteur"
         >
           <ChevronDown size={24} color={colors.text} />
         </TouchableOpacity>
@@ -137,12 +140,21 @@ export const PlayerScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.circleBtn}
             onPress={() => setDisplayMode(displayMode === 'vinyl' ? 'card' : 'vinyl')}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel={
+              displayMode === 'vinyl' ? 'Afficher la pochette en carte' : 'Afficher le vinyle'
+            }
+            accessibilityState={{ selected: displayMode === 'vinyl' }}
           >
             <Disc size={20} color={displayMode === 'vinyl' ? palette.primary : colors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.circleBtn}
             onPress={() => setQueueModalVisible(true)}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel="Voir la file d'attente"
           >
             <ListMusic size={20} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -195,6 +207,10 @@ export const PlayerScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.favoriteButton}
           onPress={() => toggleFavorite(track.id)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          accessibilityState={{ selected: isFavorite }}
         >
           <Heart
             size={26}
@@ -214,6 +230,12 @@ export const PlayerScreen: React.FC = () => {
           minimumTrackTintColor={palette.primary}
           maximumTrackTintColor={colors.progressBarBg}
           thumbTintColor={palette.primary}
+          accessibilityLabel="Progression de la lecture"
+          accessibilityValue={{
+            min: 0,
+            max: Math.round(effectiveDuration),
+            now: Math.round(currentPos),
+          }}
           onValueChange={(val) => {
             setIsSliding(true);
             setSlidingValue(val);
@@ -234,7 +256,14 @@ export const PlayerScreen: React.FC = () => {
       {/* Main Playback Deck */}
       <View style={styles.controlsRow}>
         {/* Shuffle */}
-        <TouchableOpacity onPress={toggleShuffle} style={styles.sideControlBtn}>
+        <TouchableOpacity
+          onPress={toggleShuffle}
+          style={styles.sideControlBtn}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Lecture aléatoire"
+          accessibilityState={{ selected: isShuffle }}
+        >
           <Shuffle
             size={22}
             color={isShuffle ? palette.primary : colors.textMuted}
@@ -245,6 +274,9 @@ export const PlayerScreen: React.FC = () => {
         <TouchableOpacity
           onPress={() => AudioService.skipToPrevious()}
           style={styles.mainControlBtn}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Morceau précédent"
         >
           <SkipBack size={28} color={colors.text} />
         </TouchableOpacity>
@@ -258,6 +290,8 @@ export const PlayerScreen: React.FC = () => {
             { backgroundColor: palette.primary },
             shadows.glow(palette.glowPrimary),
           ]}
+          accessibilityRole="button"
+          accessibilityLabel={isPlaying ? 'Mettre en pause' : 'Lire'}
         >
           {isPlaying ? (
             <Pause size={32} color="#FFF" fill="#FFF" />
@@ -270,12 +304,28 @@ export const PlayerScreen: React.FC = () => {
         <TouchableOpacity
           onPress={() => AudioService.skipToNext()}
           style={styles.mainControlBtn}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Morceau suivant"
         >
           <SkipForward size={28} color={colors.text} />
         </TouchableOpacity>
 
         {/* Repeat */}
-        <TouchableOpacity onPress={cycleRepeatMode} style={styles.sideControlBtn}>
+        <TouchableOpacity
+          onPress={cycleRepeatMode}
+          style={styles.sideControlBtn}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel={
+            repeatMode === 'off'
+              ? 'Répéter : désactivé'
+              : repeatMode === 'queue'
+              ? 'Répéter : file d’attente'
+              : 'Répéter : morceau en cours'
+          }
+          accessibilityState={{ selected: repeatMode !== 'off' }}
+        >
           {repeatMode === 'track' ? (
             <Repeat1 size={22} color={palette.primary} />
           ) : (
