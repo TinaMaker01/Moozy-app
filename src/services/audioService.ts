@@ -8,6 +8,7 @@ import TrackPlayer, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RepeatMode, Track } from '../types/music';
 import { PLAYBACK_POSITION_STORAGE_KEY } from '../constants/storageKeys';
+import { requestNotificationPermission } from './permissions';
 
 let isPlayerSetup = false;
 
@@ -16,6 +17,13 @@ export async function setupPlayer(): Promise<boolean> {
     return true;
   }
 
+  // Android 13+ treats POST_NOTIFICATIONS as denied until explicitly
+  // requested at runtime, manifest declaration alone isn't enough — without
+  // this, the playback notification (and the lockscreen controls tied to
+  // it) silently never appears. Best-effort: playback still works even if
+  // the user declines, just without a visible notification.
+  await requestNotificationPermission();
+
   try {
     await TrackPlayer.setupPlayer({
       autoHandleInterruptions: true,
@@ -23,7 +31,13 @@ export async function setupPlayer(): Promise<boolean> {
 
     await TrackPlayer.updateOptions({
       android: {
-        appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+        // Swiping Moozy away from recents should behave like every other
+        // background music app (Spotify, YouTube Music, Gramophone) and
+        // this library's own default: keep playing, keep the notification
+        // up. The previous StopPlaybackAndRemoveNotification setting
+        // silently killed "background playback" on the single most common
+        // gesture a user makes after starting a song and switching apps.
+        appKilledPlaybackBehavior: AppKilledPlaybackBehavior.ContinuePlayback,
       },
       // Drives Event.PlaybackProgressUpdated (see playbackService.ts), which
       // persists the playback position periodically so a killed/reopened
