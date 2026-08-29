@@ -17,10 +17,12 @@ import {
   Folder,
   FolderSync,
   Heart,
+  LayoutGrid,
   ListMusic,
   Mic,
   Music,
   Plus,
+  Rows3,
   Search,
   SearchX,
   X,
@@ -28,6 +30,7 @@ import {
 import { borderRadius, ColorTokens, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { Playlist, Track } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
 import { MusicListItem } from '../components/MusicListItem';
@@ -37,6 +40,7 @@ import { TrackOptionsModal } from '../components/TrackOptionsModal';
 import { EmptyState } from '../components/states/EmptyState';
 import { useLibraryScan } from '../hooks/useLibraryScan';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { useFolderGroups } from '../hooks/useFolderGroups';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type LibraryTab = 'tracks' | 'artists' | 'albums' | 'folders' | 'playlists' | 'favorites';
@@ -76,7 +80,12 @@ export const LibraryScreen: React.FC = () => {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [activeTab, setActiveTab] = useState<LibraryTab>('tracks');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('title');
+  // Starts from the persisted Settings > Bibliothèque default, but stays
+  // freely changeable per-session from the sort chips below.
+  const defaultSort = useSettingsStore((s) => s.defaultSort);
+  const [sortBy, setSortBy] = useState<SortOption>(defaultSort);
+  const albumsViewMode = useSettingsStore((s) => s.albumsViewMode);
+  const setAlbumsViewMode = useSettingsStore((s) => s.setAlbumsViewMode);
   const [selectedOptionTrack, setSelectedOptionTrack] = useState<Track | null>(null);
   const [createPlaylistVisible, setCreatePlaylistVisible] = useState(false);
   const { isScanning, scan } = useLibraryScan();
@@ -139,21 +148,8 @@ export const LibraryScreen: React.FC = () => {
 
   // Extract folders (Android only — local scans set folderPath from the
   // MediaStore file path; demo/remote tracks fall into a single bucket).
-  const foldersList = useMemo(() => {
-    const foldersMap = new Map<string, Track[]>();
-    tracks.forEach((t) => {
-      const folder = t.folderPath || 'Autres morceaux';
-      const list = foldersMap.get(folder) || [];
-      list.push(t);
-      foldersMap.set(folder, list);
-    });
-    return Array.from(foldersMap.entries()).map(([folder, trks]) => ({
-      folder,
-      label: folder.split('/').filter(Boolean).pop() || folder,
-      count: trks.length,
-      tracks: trks,
-    }));
-  }, [tracks]);
+  // Shared with Settings' folder-exclusion list via useFolderGroups.
+  const foldersList = useFolderGroups();
 
   // Unified, categorized search across everything in the library at once —
   // rather than only ever filtering whichever tab happens to be open (the
@@ -377,8 +373,36 @@ export const LibraryScreen: React.FC = () => {
     }
 
     if (activeTab === 'albums') {
+      if (albumsViewMode === 'grid') {
+        return (
+          <FlatList
+            key="albums-grid"
+            data={albumsList}
+            keyExtractor={(item) => item.album}
+            numColumns={2}
+            columnWrapperStyle={styles.gridRow}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.gridCard}
+                onPress={() => playTrack(item.tracks[0], item.tracks)}
+              >
+                <TrackArtwork uri={item.artwork} style={styles.gridCover} iconSize={40} />
+                <Text style={styles.gridTitle} numberOfLines={1}>
+                  {item.album}
+                </Text>
+                <Text style={styles.gridSubtitle} numberOfLines={1}>
+                  {item.artist}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        );
+      }
+
       return (
         <FlatList
+          key="albums-list"
           data={albumsList}
           keyExtractor={(item) => item.album}
           contentContainerStyle={styles.listContent}
@@ -479,6 +503,21 @@ export const LibraryScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Bibliothèque</Text>
         <View style={styles.headerActions}>
+          {activeTab === 'albums' && (
+            <TouchableOpacity
+              style={styles.scanBtn}
+              onPress={() => setAlbumsViewMode(albumsViewMode === 'grid' ? 'list' : 'grid')}
+              accessibilityLabel={
+                albumsViewMode === 'grid' ? 'Afficher en liste' : 'Afficher en grille'
+              }
+            >
+              {albumsViewMode === 'grid' ? (
+                <Rows3 size={20} color={colors.textSecondary} />
+              ) : (
+                <LayoutGrid size={20} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+          )}
           {activeTab === 'playlists' && (
             <TouchableOpacity
               style={styles.scanBtn}
@@ -784,6 +823,32 @@ function createStyles(colors: ColorTokens) {
       width: 48,
       height: 48,
       borderRadius: borderRadius.md,
+    },
+    gridRow: {
+      gap: 12,
+      paddingHorizontal: 16,
+    },
+    gridCard: {
+      flex: 1,
+      marginVertical: 8,
+    },
+    gridCover: {
+      width: '100%',
+      aspectRatio: 1,
+      borderRadius: borderRadius.lg,
+      marginBottom: 8,
+    },
+    gridTitle: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    gridSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
     },
     folderIcon: {
       width: 48,

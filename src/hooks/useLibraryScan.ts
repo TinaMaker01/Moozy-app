@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useMusicStore } from '../store/useMusicStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { scanLocalMusicFiles } from '../services/localMusicScanner';
 import { Track } from '../types/music';
 
@@ -8,6 +9,22 @@ export interface LibraryScanResult {
   found: Track[];
   /** The subset of `found` that wasn't already in the library. */
   added: Track[];
+}
+
+const MIN_SHORT_TRACK_SECONDS = 30;
+
+/** Applies the user's Bibliothèque settings (excluded folders, hide-short-tracks) to a fresh scan result. */
+function applyLibraryFilters(found: Track[]): Track[] {
+  const { excludedFolders, hideShortTracks } = useSettingsStore.getState();
+  return found.filter((t) => {
+    if (t.folderPath && excludedFolders.includes(t.folderPath)) {
+      return false;
+    }
+    if (hideShortTracks && (t.duration ?? Infinity) < MIN_SHORT_TRACK_SECONDS) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -23,7 +40,8 @@ export function useLibraryScan() {
   const scan = useCallback(async (): Promise<LibraryScanResult> => {
     setIsScanning(true);
     try {
-      const found = await scanLocalMusicFiles();
+      const rawFound = await scanLocalMusicFiles();
+      const found = applyLibraryFilters(rawFound);
       let added: Track[] = [];
 
       if (found.length > 0) {
@@ -41,5 +59,22 @@ export function useLibraryScan() {
     }
   }, []);
 
-  return { isScanning, scan };
+  /**
+   * Full rescan that *replaces* the library instead of merging into it — the
+   * regular scan only ever adds newly found tracks, so a file deleted or
+   * moved off the device stays listed forever until this runs.
+   */
+  const rebuild = useCallback(async (): Promise<Track[]> => {
+    setIsScanning(true);
+    try {
+      const rawFound = await scanLocalMusicFiles();
+      const found = applyLibraryFilters(rawFound);
+      useMusicStore.getState().setTracks(found);
+      return found;
+    } finally {
+      setIsScanning(false);
+    }
+  }, []);
+
+  return { isScanning, scan, rebuild };
 }

@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { borderRadius, ColorTokens, shadows } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { TrackArtwork } from './TrackArtwork';
 
 interface Props {
@@ -25,12 +26,23 @@ export const AnimatedVinyl: React.FC<Props> = ({
   glowColor,
 }) => {
   const { colors } = useTheme();
+  const reduceMotion = useSettingsStore((s) => s.reduceMotion);
   const styles = useMemo(() => createStyles(colors), [colors]);
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const rotationLoop = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
+    if (reduceMotion) {
+      // Settings > Interface > Réduire les animations: skip the decorative
+      // spin/scale entirely rather than just letting it keep running.
+      if (rotationLoop.current) {
+        rotationLoop.current.stop();
+      }
+      scaleAnim.setValue(1);
+      return;
+    }
+
     if (isPlaying) {
       // Start or resume rotation
       rotationLoop.current = Animated.loop(
@@ -60,7 +72,7 @@ export const AnimatedVinyl: React.FC<Props> = ({
         useNativeDriver: true,
       }).start();
     }
-  }, [isPlaying, rotateAnim, scaleAnim]);
+  }, [isPlaying, reduceMotion, rotateAnim, scaleAnim]);
 
   const spin = rotateAnim.interpolate({
     inputRange: [0, 1],

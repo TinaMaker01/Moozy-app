@@ -10,6 +10,7 @@ import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { MiniPlayer } from './src/components/MiniPlayer';
 import { setupPlayer } from './src/services/audioService';
 import { useMusicStore } from './src/store/useMusicStore';
+import { useSettingsStore } from './src/store/useSettingsStore';
 import { ThemeProvider, useTheme } from './src/theme';
 
 /** Everything that needs the resolved Light/Dark/System palette lives below the ThemeProvider. */
@@ -52,6 +53,10 @@ function AppContent(): React.JSX.Element {
 function App(): React.JSX.Element {
   useEffect(() => {
     async function init() {
+      // Settings must load first: initStore below reads resumeOnStartup to
+      // decide whether to restore the previous session, so the persisted
+      // value (not the in-memory default) needs to already be in place.
+      await useSettingsStore.getState().initSettings();
       await setupPlayer();
       await useMusicStore.getState().initStore();
       // Keep the native splash on screen until the player & store are ready,

@@ -10,6 +10,7 @@ import { borderRadius, ColorTokens, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { Track } from '../types/music';
 import { useMusicStore } from '../store/useMusicStore';
+import { ListDensity, useSettingsStore } from '../store/useSettingsStore';
 import { TrackArtwork } from './TrackArtwork';
 import { VisualizerBar } from './VisualizerBar';
 
@@ -38,7 +39,8 @@ const MusicListItemComponent: React.FC<Props> = ({
   onOptionsPress,
 }) => {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const density = useSettingsStore((s) => s.listDensity);
+  const styles = useMemo(() => createStyles(colors, density), [colors, density]);
   const favorites = useMusicStore((s) => s.favorites);
   const toggleFavorite = useMusicStore((s) => s.toggleFavorite);
   const isFavorite = favorites.includes(track.id);
@@ -106,16 +108,19 @@ const MusicListItemComponent: React.FC<Props> = ({
   );
 };
 
-function createStyles(colors: ColorTokens) {
+function createStyles(colors: ColorTokens, density: ListDensity) {
+  const isCompact = density === 'compact';
+  const artworkSize = isCompact ? 36 : 48;
+
   return StyleSheet.create({
     container: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 10,
+      paddingVertical: isCompact ? 5 : 10,
       paddingHorizontal: 16,
       borderRadius: borderRadius.md,
       marginHorizontal: 8,
-      marginVertical: 2,
+      marginVertical: isCompact ? 0 : 2,
     },
     activeContainer: {
       backgroundColor: colors.activeTrackBg,
@@ -123,8 +128,8 @@ function createStyles(colors: ColorTokens) {
       borderColor: colors.activeTrackBorder,
     },
     artworkContainer: {
-      width: 48,
-      height: 48,
+      width: artworkSize,
+      height: artworkSize,
       borderRadius: borderRadius.md,
       overflow: 'hidden',
       backgroundColor: colors.surfaceCard,

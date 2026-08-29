@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MoodCategory, Playlist, RepeatMode, Track } from '../types/music';
 import { AudioService } from '../services/audioService';
+import { useSettingsStore } from './useSettingsStore';
 import {
   CURRENT_TRACK_STORAGE_KEY,
   FAVORITES_STORAGE_KEY,
@@ -94,6 +95,8 @@ interface MusicStoreState {
   // Actions
   initStore: () => Promise<void>;
   setTracks: (tracks: Track[]) => void;
+  removeTracksInFolder: (folder: string) => void;
+  clearHistory: () => void;
   setCurrentTrack: (track: Track | null) => void;
   playTrack: (track: Track, queueList?: Track[]) => Promise<void>;
   playNextTrack: (track: Track) => void;
@@ -191,7 +194,11 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
       // Restore the last playback session — reloads the track into the
       // native player and seeks to where the user left off, but stays
       // paused rather than auto-blasting audio the moment the app opens.
-      if (currentTrackJson) {
+      // Skipped entirely when the user has turned off "Resume playback" in
+      // Settings — App.tsx awaits useSettingsStore's own init before this
+      // runs, so the persisted value (not just the in-memory default) is
+      // already in place here.
+      if (currentTrackJson && useSettingsStore.getState().resumeOnStartup) {
         const restoredTrack: Track = JSON.parse(currentTrackJson);
         const restoredQueue: Track[] = queueJson ? JSON.parse(queueJson) : [restoredTrack];
         const restoredRepeat: RepeatMode = repeatModeJson ? JSON.parse(repeatModeJson) : 'off';
@@ -223,6 +230,17 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     // Persist so a locally-scanned library survives an app restart instead of
     // requiring the user to rescan every time.
     AsyncStorage.setItem(TRACKS_STORAGE_KEY, JSON.stringify(tracks)).catch(console.warn);
+  },
+
+  removeTracksInFolder: (folder) => {
+    const updated = get().tracks.filter((t) => t.folderPath !== folder);
+    set({ tracks: updated });
+    AsyncStorage.setItem(TRACKS_STORAGE_KEY, JSON.stringify(updated)).catch(console.warn);
+  },
+
+  clearHistory: () => {
+    set({ recentlyPlayed: [] });
+    AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify([])).catch(console.warn);
   },
 
   setCurrentTrack: (track) => set({ currentTrack: track }),

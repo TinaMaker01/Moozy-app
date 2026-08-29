@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 interface Props {
   isPlaying: boolean;
@@ -16,6 +17,7 @@ export const VisualizerBar: React.FC<Props> = ({
   maxHeight = 24,
 }) => {
   const { colors } = useTheme();
+  const reduceMotion = useSettingsStore((s) => s.reduceMotion);
   const resolvedColor = color || colors.primary;
   const animatedValues = useRef<Animated.Value[]>(
     Array.from({ length: barCount }, () => new Animated.Value(0.3))
@@ -24,7 +26,7 @@ export const VisualizerBar: React.FC<Props> = ({
   useEffect(() => {
     let animations: Animated.CompositeAnimation[] = [];
 
-    if (isPlaying) {
+    if (isPlaying && !reduceMotion) {
       animations = animatedValues.map((anim, index) => {
         const duration = 300 + (index % 3) * 150 + Math.random() * 100;
         return Animated.loop(
@@ -57,7 +59,7 @@ export const VisualizerBar: React.FC<Props> = ({
     return () => {
       animations.forEach((a) => a.stop());
     };
-  }, [isPlaying, animatedValues]);
+  }, [isPlaying, reduceMotion, animatedValues]);
 
   return (
     <View style={styles.container}>
