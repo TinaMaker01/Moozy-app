@@ -19,6 +19,7 @@ import {
   ListMusic,
   Mic,
   Music,
+  Plus,
   Search,
   X,
 } from 'lucide-react-native';
@@ -28,8 +29,10 @@ import { useMusicStore } from '../store/useMusicStore';
 import { Track } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
 import { MusicListItem } from '../components/MusicListItem';
+import { PlaylistFormModal } from '../components/PlaylistFormModal';
 import { TrackArtwork } from '../components/TrackArtwork';
 import { TrackOptionsModal } from '../components/TrackOptionsModal';
+import { EmptyState } from '../components/states/EmptyState';
 import { useLibraryScan } from '../hooks/useLibraryScan';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -63,6 +66,7 @@ export const LibraryScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('title');
   const [selectedOptionTrack, setSelectedOptionTrack] = useState<Track | null>(null);
+  const [createPlaylistVisible, setCreatePlaylistVisible] = useState(false);
   const { isScanning, scan } = useLibraryScan();
 
   // Selectors: subscribe only to the slices this screen actually reads, so it
@@ -73,6 +77,7 @@ export const LibraryScreen: React.FC = () => {
   const favorites = useMusicStore((s) => s.favorites);
   const playlists = useMusicStore((s) => s.playlists);
   const playTrack = useMusicStore((s) => s.playTrack);
+  const createPlaylist = useMusicStore((s) => s.createPlaylist);
 
   // Filter + sort based on search query and the chosen sort order.
   const query = searchQuery.trim().toLowerCase();
@@ -294,6 +299,15 @@ export const LibraryScreen: React.FC = () => {
           data={playlists}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <EmptyState
+              icon={<ListMusic size={48} color={colors.textMuted} />}
+              title="Aucune playlist"
+              message="Créez votre première playlist pour organiser vos morceaux."
+              actionLabel="Créer une playlist"
+              onAction={() => setCreatePlaylistVisible(true)}
+            />
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.cardItem}
@@ -324,17 +338,29 @@ export const LibraryScreen: React.FC = () => {
       {/* Top Bar */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Bibliothèque</Text>
-        <TouchableOpacity
-          style={styles.scanBtn}
-          onPress={scan}
-          disabled={isScanning}
-        >
-          {isScanning ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <FolderSync size={20} color={colors.textSecondary} />
+        <View style={styles.headerActions}>
+          {activeTab === 'playlists' && (
+            <TouchableOpacity
+              style={styles.scanBtn}
+              onPress={() => setCreatePlaylistVisible(true)}
+              accessibilityLabel="Créer une playlist"
+            >
+              <Plus size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
           )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.scanBtn}
+            onPress={scan}
+            disabled={isScanning}
+            accessibilityLabel="Scanner le stockage"
+          >
+            {isScanning ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <FolderSync size={20} color={colors.textSecondary} />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Instant Search Bar */}
@@ -425,6 +451,14 @@ export const LibraryScreen: React.FC = () => {
         visible={selectedOptionTrack !== null}
         onClose={() => setSelectedOptionTrack(null)}
       />
+
+      <PlaylistFormModal
+        visible={createPlaylistVisible}
+        onClose={() => setCreatePlaylistVisible(false)}
+        title="Nouvelle playlist"
+        submitLabel="Créer"
+        onSubmit={(name, description) => createPlaylist(name, description || undefined)}
+      />
     </View>
   );
 };
@@ -447,6 +481,10 @@ function createStyles(colors: ColorTokens) {
       ...typography.hero,
       color: colors.text,
       fontSize: 26,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      gap: 8,
     },
     scanBtn: {
       width: 38,

@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -8,13 +9,23 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { ChevronLeft, Play, Shuffle } from 'lucide-react-native';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronUp,
+  MoreVertical,
+  Play,
+  Shuffle,
+} from 'lucide-react-native';
 import { borderRadius, ColorTokens, shadows, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { RootStackParamList } from '../types/navigation';
+import { Track } from '../types/music';
 import { MusicListItem } from '../components/MusicListItem';
+import { PlaylistFormModal } from '../components/PlaylistFormModal';
 import { TrackArtwork } from '../components/TrackArtwork';
+import { TrackOptionsModal } from '../components/TrackOptionsModal';
 import { EmptyState } from '../components/states/EmptyState';
 
 type PlaylistDetailRouteProp = RouteProp<RootStackParamList, 'PlaylistDetail'>;
@@ -26,18 +37,33 @@ export const PlaylistDetailScreen: React.FC = () => {
   const { playlistId } = route.params;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [selectedOptionTrack, setSelectedOptionTrack] = useState<Track | null>(null);
 
   const tracks = useMusicStore((s) => s.tracks);
   const currentTrack = useMusicStore((s) => s.currentTrack);
   const playTrack = useMusicStore((s) => s.playTrack);
+  const deletePlaylist = useMusicStore((s) => s.deletePlaylist);
+  const renamePlaylist = useMusicStore((s) => s.renamePlaylist);
+  const reorderPlaylistTracks = useMusicStore((s) => s.reorderPlaylistTracks);
   // Looked up live by id (rather than passed as a route param snapshot) so
   // a rename or a track added/removed elsewhere shows up immediately here.
   const playlist = useMusicStore((s) => s.playlists.find((p) => p.id === playlistId));
 
-  const playlistTracks = useMemo(
-    () => (playlist ? tracks.filter((t) => playlist.trackIds.includes(t.id)) : []),
-    [tracks, playlist]
-  );
+  // Mapped from trackIds (preserving playlist order) rather than filtering
+  // the library array — filtering would silently follow the library's own
+  // order and make reordering below have no visible effect. A trackId
+  // whose track was removed from the device is skipped rather than
+  // crashing on a lookup miss.
+  const playlistTracks = useMemo(() => {
+    if (!playlist) {
+      return [];
+    }
+    const trackMap = new Map(tracks.map((t) => [t.id, t]));
+    return playlist.trackIds
+      .map((id) => trackMap.get(id))
+      .filter((t): t is Track => !!t);
+  }, [tracks, playlist]);
 
   if (!playlist) {
     return (
@@ -73,6 +99,32 @@ export const PlaylistDetailScreen: React.FC = () => {
     }
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      'Supprimer la playlist ?',
+      `« ${playlist.name} » sera définitivement supprimée. Les morceaux eux-mêmes ne sont pas affectés.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            await deletePlaylist(playlist.id);
+            navigation.goBack();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleOpenOptions = () => {
+    Alert.alert(playlist.name, undefined, [
+      { text: 'Renommer', onPress: () => setRenameModalVisible(true) },
+      { text: 'Supprimer', style: 'destructive', onPress: handleDelete },
+      { text: 'Annuler', style: 'cancel' },
+    ]);
+  };
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Top Header */}
@@ -86,7 +138,13 @@ export const PlaylistDetailScreen: React.FC = () => {
         <Text style={styles.headerTitle} numberOfLines={1}>
           {playlist.name}
         </Text>
-        <View style={styles.placeholderBtn} />
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={handleOpenOptions}
+          accessibilityLabel="Options de la playlist"
+        >
+          <MoreVertical size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -129,13 +187,64 @@ export const PlaylistDetailScreen: React.FC = () => {
             <Text style={styles.emptyText}>Aucun morceau dans cette playlist.</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <MusicListItem
-            track={item}
-            isActive={currentTrack?.id === item.id}
-            onPress={() => playTrack(item, playlistTracks)}
-          />
+        renderItem={({ item, index }) => (
+          <View style={styles.trackRow}>
+            <View style={styles.trackRowContent}>
+              <MusicListItem
+                track={item}
+                isActive={currentTrack?.id === item.id}
+                onPress={() => playTrack(item, playlistTracks)}
+                onOptionsPress={() => setSelectedOptionTrack(item)}
+              />
+            </View>
+            <View style={styles.reorderControls}>
+              <TouchableOpacity
+                style={[styles.reorderBtn, index === 0 && styles.reorderBtnDisabled]}
+                disabled={index === 0}
+                onPress={() => reorderPlaylistTracks(playlist.id, index, index - 1)}
+                accessibilityLabel="Déplacer vers le haut"
+              >
+                <ChevronUp
+                  size={16}
+                  color={index === 0 ? colors.border : colors.textSecondary}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.reorderBtn,
+                  index === playlistTracks.length - 1 && styles.reorderBtnDisabled,
+                ]}
+                disabled={index === playlistTracks.length - 1}
+                onPress={() => reorderPlaylistTracks(playlist.id, index, index + 1)}
+                accessibilityLabel="Déplacer vers le bas"
+              >
+                <ChevronDown
+                  size={16}
+                  color={
+                    index === playlistTracks.length - 1 ? colors.border : colors.textSecondary
+                  }
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
+      />
+
+      <TrackOptionsModal
+        track={selectedOptionTrack}
+        visible={selectedOptionTrack !== null}
+        onClose={() => setSelectedOptionTrack(null)}
+        playlistContext={{ playlistId: playlist.id }}
+      />
+
+      <PlaylistFormModal
+        visible={renameModalVisible}
+        onClose={() => setRenameModalVisible(false)}
+        title="Renommer la playlist"
+        submitLabel="Enregistrer"
+        initialName={playlist.name}
+        initialDescription={playlist.description}
+        onSubmit={(name, description) => renamePlaylist(playlist.id, name, description)}
       />
     </View>
   );
@@ -171,6 +280,9 @@ function createStyles(colors: ColorTokens) {
       ...typography.h2,
       color: colors.text,
       fontSize: 17,
+      flex: 1,
+      textAlign: 'center',
+      marginHorizontal: 8,
     },
     listContent: {
       paddingBottom: 120,
@@ -251,6 +363,22 @@ function createStyles(colors: ColorTokens) {
     emptyText: {
       ...typography.bodySmall,
       color: colors.textMuted,
+    },
+    trackRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    trackRowContent: {
+      flex: 1,
+    },
+    reorderControls: {
+      marginRight: 12,
+    },
+    reorderBtn: {
+      padding: 4,
+    },
+    reorderBtnDisabled: {
+      opacity: 0.3,
     },
   });
 }

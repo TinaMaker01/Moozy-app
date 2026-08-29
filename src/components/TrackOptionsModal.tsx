@@ -12,6 +12,7 @@ import {
   Heart,
   ListMusic,
   ListPlus,
+  ListX,
   Play,
   X,
 } from 'lucide-react-native';
@@ -26,12 +27,15 @@ interface Props {
   track: Track | null;
   visible: boolean;
   onClose: () => void;
+  /** Set when opened from within a specific playlist's own screen, to offer "remove from this playlist". */
+  playlistContext?: { playlistId: string };
 }
 
 export const TrackOptionsModal: React.FC<Props> = ({
   track,
   visible,
   onClose,
+  playlistContext,
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -42,6 +46,7 @@ export const TrackOptionsModal: React.FC<Props> = ({
   const playNextTrack = useMusicStore((s) => s.playNextTrack);
   const addToQueue = useMusicStore((s) => s.addToQueue);
   const addTrackToPlaylist = useMusicStore((s) => s.addTrackToPlaylist);
+  const removeTrackFromPlaylist = useMusicStore((s) => s.removeTrackFromPlaylist);
   const playTrack = useMusicStore((s) => s.playTrack);
 
   // Reset the sub-view whenever a different track is opened, so the modal
@@ -78,6 +83,13 @@ export const TrackOptionsModal: React.FC<Props> = ({
 
   const handleAddToPlaylist = (playlistId: string) => {
     addTrackToPlaylist(playlistId, track.id);
+    onClose();
+  };
+
+  const handleRemoveFromPlaylist = () => {
+    if (playlistContext) {
+      removeTrackFromPlaylist(playlistContext.playlistId, track.id);
+    }
     onClose();
   };
 
@@ -195,6 +207,20 @@ export const TrackOptionsModal: React.FC<Props> = ({
                       {isFavorite ? 'Retirer des Coups de Cœur' : 'Ajouter aux Coups de Cœur'}
                     </Text>
                   </TouchableOpacity>
+
+                  {playlistContext && (
+                    <TouchableOpacity
+                      style={styles.actionRow}
+                      onPress={handleRemoveFromPlaylist}
+                    >
+                      <View style={styles.iconCircle}>
+                        <ListX size={18} color={colors.error} />
+                      </View>
+                      <Text style={[styles.actionText, { color: colors.error }]}>
+                        Retirer de cette playlist
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
             </View>

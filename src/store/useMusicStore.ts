@@ -106,6 +106,8 @@ interface MusicStoreState {
   deletePlaylist: (playlistId: string) => Promise<void>;
   addTrackToPlaylist: (playlistId: string, trackId: string) => Promise<void>;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
+  renamePlaylist: (playlistId: string, name: string, description?: string) => Promise<void>;
+  reorderPlaylistTracks: (playlistId: string, fromIndex: number, toIndex: number) => Promise<void>;
   toggleShuffle: () => Promise<void>;
   cycleRepeatMode: () => Promise<void>;
   setSearchQuery: (query: string) => void;
@@ -349,6 +351,36 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
         return { ...pl, trackIds: pl.trackIds.filter((id) => id !== trackId) };
       }
       return pl;
+    });
+    set({ playlists: updated });
+    await AsyncStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(updated));
+  },
+
+  renamePlaylist: async (playlistId, name, description) => {
+    const updated = get().playlists.map((pl) =>
+      pl.id === playlistId ? { ...pl, name, description } : pl
+    );
+    set({ playlists: updated });
+    await AsyncStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(updated));
+  },
+
+  reorderPlaylistTracks: async (playlistId, fromIndex, toIndex) => {
+    const updated = get().playlists.map((pl) => {
+      if (pl.id !== playlistId) {
+        return pl;
+      }
+      if (
+        fromIndex < 0 ||
+        fromIndex >= pl.trackIds.length ||
+        toIndex < 0 ||
+        toIndex >= pl.trackIds.length
+      ) {
+        return pl;
+      }
+      const trackIds = [...pl.trackIds];
+      const [moved] = trackIds.splice(fromIndex, 1);
+      trackIds.splice(toIndex, 0, moved);
+      return { ...pl, trackIds };
     });
     set({ playlists: updated });
     await AsyncStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(updated));
