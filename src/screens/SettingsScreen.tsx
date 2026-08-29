@@ -531,7 +531,7 @@ export const SettingsScreen: React.FC = () => {
             </View>
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Moozy Music Player</Text>
-              <Text style={styles.settingSubtitle}>Version 1.12.0</Text>
+              <Text style={styles.settingSubtitle}>Version 1.13.0</Text>
             </View>
           </View>
         </View>
