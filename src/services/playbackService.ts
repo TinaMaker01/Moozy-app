@@ -1,4 +1,6 @@
 import TrackPlayer, { Event } from 'react-native-track-player';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PLAYBACK_POSITION_STORAGE_KEY } from '../constants/storageKeys';
 
 export default async function playbackService() {
   TrackPlayer.addEventListener(Event.RemotePlay, () => TrackPlayer.play());
@@ -15,5 +17,16 @@ export default async function playbackService() {
     } else {
       await TrackPlayer.play();
     }
+  });
+
+  // Periodically (see progressUpdateEventInterval in audioService.ts)
+  // persists how far into the current track playback has gotten, so a
+  // killed-and-reopened app can resume close to where it left off instead
+  // of always restarting from zero — see useMusicStore's initStore.
+  TrackPlayer.addEventListener(Event.PlaybackProgressUpdated, (event) => {
+    AsyncStorage.setItem(
+      PLAYBACK_POSITION_STORAGE_KEY,
+      JSON.stringify(event.position)
+    ).catch(() => {});
   });
 }

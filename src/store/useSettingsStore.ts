@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EqualizerPreset, EqualizerSettings } from '../types/music';
 import { AudioService } from '../services/audioService';
-
-const THEME_MODE_STORAGE_KEY = '@moozy_theme_mode_v1';
+import { THEME_MODE_STORAGE_KEY } from '../constants/storageKeys';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 

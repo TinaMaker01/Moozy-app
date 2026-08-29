@@ -18,6 +18,7 @@ const TrackPlayer = {
   getQueue: jest.fn(() => Promise.resolve([])),
   getActiveTrackIndex: jest.fn(() => Promise.resolve(undefined)),
   getPlaybackState: jest.fn(() => Promise.resolve({ state: 'none' })),
+  getProgress: jest.fn(() => Promise.resolve({ position: 0, buffered: 0, duration: 0 })),
   removeUpcomingTracks: jest.fn(() => Promise.resolve()),
   addEventListener: jest.fn(() => ({ remove: jest.fn() })),
 };
@@ -33,6 +34,7 @@ module.exports = {
     RemoteSeek: 'remote-seek',
     RemoteStop: 'remote-stop',
     RemoteDuck: 'remote-duck',
+    PlaybackProgressUpdated: 'playback-progress-updated',
   },
   State: {
     None: 'none',

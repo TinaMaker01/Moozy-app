@@ -2,11 +2,17 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MoodCategory, Playlist, RepeatMode, Track } from '../types/music';
 import { AudioService } from '../services/audioService';
-
-const FAVORITES_STORAGE_KEY = '@moozy_favorites_v1';
-const PLAYLISTS_STORAGE_KEY = '@moozy_playlists_v1';
-const HISTORY_STORAGE_KEY = '@moozy_history_v1';
-const TRACKS_STORAGE_KEY = '@moozy_tracks_v1';
+import {
+  CURRENT_TRACK_STORAGE_KEY,
+  FAVORITES_STORAGE_KEY,
+  HISTORY_STORAGE_KEY,
+  PLAYBACK_POSITION_STORAGE_KEY,
+  PLAYLISTS_STORAGE_KEY,
+  QUEUE_STORAGE_KEY,
+  REPEAT_MODE_STORAGE_KEY,
+  SHUFFLE_STORAGE_KEY,
+  TRACKS_STORAGE_KEY,
+} from '../constants/storageKeys';
 
 export const INITIAL_DEMO_TRACKS: Track[] = [
   {
@@ -66,6 +72,10 @@ export const INITIAL_DEMO_TRACKS: Track[] = [
   },
 ];
 
+function persistQueue(queue: Track[]) {
+  AsyncStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue)).catch(console.warn);
+}
+
 interface MusicStoreState {
   tracks: Track[];
   currentTrack: Track | null;
@@ -105,7 +115,12 @@ interface MusicStoreState {
 
 export const useMusicStore = create<MusicStoreState>((set, get) => ({
   tracks: INITIAL_DEMO_TRACKS,
-  currentTrack: INITIAL_DEMO_TRACKS[0],
+  // No track is "current" until the user actually plays one, or a previous
+  // session is restored below in initStore — showing a demo track as
+  // playing before anything was ever tapped made the mini-player appear
+  // with a phantom now-playing card that wasn't actually loaded in the
+  // native player.
+  currentTrack: null,
   queue: INITIAL_DEMO_TRACKS,
   originalQueue: INITIAL_DEMO_TRACKS,
   favorites: ['demo-1', 'demo-3'],
@@ -136,11 +151,26 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
 
   initStore: async () => {
     try {
-      const [favsJson, plsJson, histJson, tracksJson] = await Promise.all([
+      const [
+        favsJson,
+        plsJson,
+        histJson,
+        tracksJson,
+        currentTrackJson,
+        queueJson,
+        repeatModeJson,
+        shuffleJson,
+        positionJson,
+      ] = await Promise.all([
         AsyncStorage.getItem(FAVORITES_STORAGE_KEY),
         AsyncStorage.getItem(PLAYLISTS_STORAGE_KEY),
         AsyncStorage.getItem(HISTORY_STORAGE_KEY),
         AsyncStorage.getItem(TRACKS_STORAGE_KEY),
+        AsyncStorage.getItem(CURRENT_TRACK_STORAGE_KEY),
+        AsyncStorage.getItem(QUEUE_STORAGE_KEY),
+        AsyncStorage.getItem(REPEAT_MODE_STORAGE_KEY),
+        AsyncStorage.getItem(SHUFFLE_STORAGE_KEY),
+        AsyncStorage.getItem(PLAYBACK_POSITION_STORAGE_KEY),
       ]);
 
       if (favsJson) {
@@ -154,6 +184,32 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
       }
       if (tracksJson) {
         set({ tracks: JSON.parse(tracksJson) });
+      }
+
+      // Restore the last playback session — reloads the track into the
+      // native player and seeks to where the user left off, but stays
+      // paused rather than auto-blasting audio the moment the app opens.
+      if (currentTrackJson) {
+        const restoredTrack: Track = JSON.parse(currentTrackJson);
+        const restoredQueue: Track[] = queueJson ? JSON.parse(queueJson) : [restoredTrack];
+        const restoredRepeat: RepeatMode = repeatModeJson ? JSON.parse(repeatModeJson) : 'off';
+        const restoredShuffle: boolean = shuffleJson ? JSON.parse(shuffleJson) : false;
+        const restoredPosition: number = positionJson ? JSON.parse(positionJson) : 0;
+
+        set({
+          currentTrack: restoredTrack,
+          queue: restoredQueue,
+          originalQueue: restoredQueue,
+          repeatMode: restoredRepeat,
+          isShuffle: restoredShuffle,
+        });
+
+        try {
+          await AudioService.loadForRestore(restoredTrack, restoredQueue, restoredPosition);
+          await AudioService.setRepeatMode(restoredRepeat);
+        } catch (e) {
+          console.warn('Failed to restore the previous playback session:', e);
+        }
       }
     } catch (e) {
       console.warn('Failed to load persisted music data:', e);
@@ -181,11 +237,14 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
       recentlyPlayed: [track, ...get().recentlyPlayed.filter((t) => t.id !== track.id)].slice(0, 20),
     });
 
-    // Persist history
-    AsyncStorage.setItem(
-      HISTORY_STORAGE_KEY,
-      JSON.stringify(get().recentlyPlayed)
-    ).catch(console.warn);
+    // Persist history + the session itself (so killing/reopening the app
+    // resumes here instead of losing track of what was playing).
+    AsyncStorage.multiSet([
+      [HISTORY_STORAGE_KEY, JSON.stringify(get().recentlyPlayed)],
+      [CURRENT_TRACK_STORAGE_KEY, JSON.stringify(track)],
+      [QUEUE_STORAGE_KEY, JSON.stringify(effectiveQueue)],
+      [PLAYBACK_POSITION_STORAGE_KEY, '0'],
+    ]).catch(console.warn);
 
     await AudioService.playTrack(track, effectiveQueue);
   },
@@ -199,12 +258,15 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     const updated = [...queue];
     updated.splice(insertIdx, 0, track);
     set({ queue: updated });
+    persistQueue(updated);
     AudioService.insertTrack(track, insertIdx).catch(console.warn);
   },
 
   addToQueue: (track) => {
     const { queue } = get();
-    set({ queue: [...queue, track] });
+    const updated = [...queue, track];
+    set({ queue: updated });
+    persistQueue(updated);
     AudioService.addToQueue(track).catch(console.warn);
   },
 
@@ -212,6 +274,7 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     const { queue } = get();
     const updated = queue.filter((_, i) => i !== index);
     set({ queue: updated });
+    persistQueue(updated);
     AudioService.removeAt(index).catch(console.warn);
   },
 
@@ -224,12 +287,15 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     const [movedItem] = updated.splice(fromIndex, 1);
     updated.splice(toIndex, 0, movedItem);
     set({ queue: updated });
+    persistQueue(updated);
     AudioService.moveTrack(fromIndex, toIndex).catch(console.warn);
   },
 
   clearQueue: () => {
     const { currentTrack } = get();
-    set({ queue: currentTrack ? [currentTrack] : [] });
+    const updated = currentTrack ? [currentTrack] : [];
+    set({ queue: updated });
+    persistQueue(updated);
     AudioService.setUpcomingQueue([]).catch(console.warn);
   },
 
@@ -292,6 +358,7 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     const { isShuffle, queue, originalQueue, currentTrack } = get();
     const newShuffle = !isShuffle;
     set({ isShuffle: newShuffle });
+    AsyncStorage.setItem(SHUFFLE_STORAGE_KEY, JSON.stringify(newShuffle)).catch(console.warn);
 
     if (!currentTrack) {
       return;
@@ -309,7 +376,9 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
         const j = Math.floor(Math.random() * (i + 1));
         [upcoming[i], upcoming[j]] = [upcoming[j], upcoming[i]];
       }
-      set({ queue: [...queue.slice(0, currentIdx + 1), ...upcoming] });
+      const updatedQueue = [...queue.slice(0, currentIdx + 1), ...upcoming];
+      set({ queue: updatedQueue });
+      persistQueue(updatedQueue);
       await AudioService.setUpcomingQueue(upcoming);
     } else {
       // Restore the pre-shuffle order for whatever's left to play.
@@ -317,7 +386,9 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
       const restored = originalQueue.filter(
         (t) => remainingIds.has(t.id) && t.id !== currentTrack.id
       );
-      set({ queue: [...queue.slice(0, currentIdx + 1), ...restored] });
+      const updatedQueue = [...queue.slice(0, currentIdx + 1), ...restored];
+      set({ queue: updatedQueue });
+      persistQueue(updatedQueue);
       await AudioService.setUpcomingQueue(restored);
     }
   },
@@ -334,6 +405,7 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
     }
 
     set({ repeatMode: next });
+    AsyncStorage.setItem(REPEAT_MODE_STORAGE_KEY, JSON.stringify(next)).catch(console.warn);
     await AudioService.setRepeatMode(next);
   },
 

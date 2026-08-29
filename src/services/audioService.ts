@@ -5,7 +5,9 @@ import TrackPlayer, {
   State,
   Track as TPTrack,
 } from 'react-native-track-player';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RepeatMode, Track } from '../types/music';
+import { PLAYBACK_POSITION_STORAGE_KEY } from '../constants/storageKeys';
 
 let isPlayerSetup = false;
 
@@ -23,6 +25,10 @@ export async function setupPlayer(): Promise<boolean> {
       android: {
         appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
       },
+      // Drives Event.PlaybackProgressUpdated (see playbackService.ts), which
+      // persists the playback position periodically so a killed/reopened
+      // app can resume roughly where it left off instead of from zero.
+      progressUpdateEventInterval: 10,
       capabilities: [
         Capability.Play,
         Capability.Pause,
@@ -108,6 +114,25 @@ export const AudioService = {
     await TrackPlayer.play();
   },
 
+  /**
+   * Reloads a previous session's queue and seeks to where it left off, but
+   * stays paused — used once on app start to restore state, not to resume
+   * playback the instant the app opens.
+   */
+  async loadForRestore(track: Track, queueList: Track[], positionSeconds: number) {
+    await setupPlayer();
+
+    const targetQueue = queueList.length > 0 ? queueList : [track];
+    const trackIndex = Math.max(
+      targetQueue.findIndex((t) => t.id === track.id),
+      0
+    );
+
+    await TrackPlayer.reset();
+    await TrackPlayer.add(targetQueue.map(toTrackPlayerFormat));
+    await TrackPlayer.skip(trackIndex, positionSeconds);
+  },
+
   /** Inserts a track into the native queue at a specific index without disturbing playback. */
   async insertTrack(track: Track, atIndex: number) {
     await TrackPlayer.add([toTrackPlayerFormat(track)], atIndex);
@@ -139,7 +164,7 @@ export const AudioService = {
   async togglePlayPause() {
     const state = await TrackPlayer.getPlaybackState();
     if (state.state === State.Playing) {
-      await TrackPlayer.pause();
+      await this.pause();
     } else {
       await TrackPlayer.play();
     }
@@ -151,6 +176,15 @@ export const AudioService = {
 
   async pause() {
     await TrackPlayer.pause();
+    // Also save immediately on an explicit pause, rather than relying only
+    // on the ~10s progress tick — covers "pause then immediately kill the
+    // app" without waiting for the next tick.
+    try {
+      const { position } = await TrackPlayer.getProgress();
+      await AsyncStorage.setItem(PLAYBACK_POSITION_STORAGE_KEY, JSON.stringify(position));
+    } catch (e) {
+      // Non-critical — the periodic tick will still catch up eventually.
+    }
   },
 
   async skipToNext() {
