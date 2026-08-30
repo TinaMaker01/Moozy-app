@@ -13,19 +13,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
-  Compass,
-  Flame,
+  Clock,
   FolderSync,
+  Heart,
   Moon,
   Music,
   Play,
   Sparkles,
-  Zap,
 } from 'lucide-react-native';
 import { borderRadius, ColorTokens, shadows, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
-import { MoodCategory } from '../types/music';
+import { QuickFilter } from '../types/music';
 import { RootStackParamList } from '../types/navigation';
 import { SleepTimerModal } from '../components/SleepTimerModal';
 import { TrackArtwork } from '../components/TrackArtwork';
@@ -34,12 +33,17 @@ import { useLibraryScan } from '../hooks/useLibraryScan';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const MOODS: { id: MoodCategory; label: string; icon: any; color: string }[] = [
+// Previously a "mood" selector (Détente/Énergie/Concentration/Soirée) that
+// filtered on Track.genre — a field the native MediaStore scanner and the
+// filesystem-walk fallback never actually populate for local files (see
+// Phase 5's decision not to guess genre), so every option but "Tous" quietly
+// matched zero tracks for any real library. These filters are built only on
+// data Moozy genuinely has for every track, so they actually do something.
+const QUICK_FILTERS: { id: QuickFilter; label: string; icon: any; color: string }[] = [
   { id: 'all', label: 'Tous', icon: Sparkles, color: '#8B5CF6' },
-  { id: 'chill', label: 'Détente 🌙', icon: Moon, color: '#06B6D4' },
-  { id: 'energy', label: 'Énergie ⚡', icon: Zap, color: '#EC4899' },
-  { id: 'focus', label: 'Concentration 🎯', icon: Compass, color: '#3B82F6' },
-  { id: 'party', label: 'Soirée 🔥', icon: Flame, color: '#F59E0B' },
+  { id: 'favorites', label: 'Favoris ❤️', icon: Heart, color: '#EC4899' },
+  { id: 'recent', label: 'Récents 🆕', icon: Clock, color: '#3B82F6' },
+  { id: 'unplayed', label: 'À découvrir 🎧', icon: Music, color: '#06B6D4' },
 ];
 
 export const HomeScreen: React.FC = () => {
@@ -56,9 +60,10 @@ export const HomeScreen: React.FC = () => {
   const tracks = useMusicStore((s) => s.tracks);
   const currentTrack = useMusicStore((s) => s.currentTrack);
   const playlists = useMusicStore((s) => s.playlists);
+  const favorites = useMusicStore((s) => s.favorites);
   const recentlyPlayed = useMusicStore((s) => s.recentlyPlayed);
-  const selectedMood = useMusicStore((s) => s.selectedMood);
-  const setSelectedMood = useMusicStore((s) => s.setSelectedMood);
+  const selectedFilter = useMusicStore((s) => s.selectedFilter);
+  const setSelectedFilter = useMusicStore((s) => s.setSelectedFilter);
   const playTrack = useMusicStore((s) => s.playTrack);
 
   const activePalette = useMemo(
@@ -77,12 +82,11 @@ export const HomeScreen: React.FC = () => {
     return 'Bonsoir 🌙';
   };
 
-  // Once the user has real local music, stop surfacing the demo/remote
-  // tracks here — they need network to load art and stream audio, so
+  // Non-local tracks would need network to load art and stream audio, so
   // they'd silently fail offline (auto-skipped by playbackService's
   // PlaybackError handler, but still a broken-feeling suggestion to show).
-  // Demo tracks stay in the store either way — Favorites and the two
-  // seeded demo playlists still work if opened explicitly.
+  // Every track the app can produce today is local (native/filesystem scan),
+  // but this stays as a safety net in case a non-local source is ever added.
   const hasLocalTracks = useMemo(() => tracks.some((t) => t.isLocal), [tracks]);
   const homeTracks = useMemo(
     () => (hasLocalTracks ? tracks.filter((t) => t.isLocal) : tracks),
@@ -90,27 +94,25 @@ export const HomeScreen: React.FC = () => {
   );
 
   const filteredTracks = useMemo(() => {
-    return homeTracks.filter((t) => {
-      if (selectedMood === 'all') {
-        return true;
-      }
-      if (selectedMood === 'chill') {
-        return t.genre?.toLowerCase().includes('lo-fi') || t.genre?.toLowerCase().includes('ambient');
-      }
-      if (selectedMood === 'energy') {
-        return t.genre?.toLowerCase().includes('edm') || t.genre?.toLowerCase().includes('cyber');
-      }
-      if (selectedMood === 'focus') {
-        return t.genre?.toLowerCase().includes('ambient') || t.genre?.toLowerCase().includes('focus');
-      }
-      return true;
-    });
-  }, [homeTracks, selectedMood]);
+    if (selectedFilter === 'favorites') {
+      return homeTracks.filter((t) => favorites.includes(t.id));
+    }
+    if (selectedFilter === 'recent') {
+      return [...homeTracks]
+        .sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0))
+        .slice(0, 20);
+    }
+    if (selectedFilter === 'unplayed') {
+      const playedIds = new Set(recentlyPlayed.map((t) => t.id));
+      return homeTracks.filter((t) => !playedIds.has(t.id));
+    }
+    return homeTracks;
+  }, [homeTracks, selectedFilter, favorites, recentlyPlayed]);
 
-  // A brand new install (or a fully reset one) must never show mood chips,
-  // a "suggestion" hero card or empty section headers as if there were
-  // already content — see Phase 15's first-open UX audit. This replaces the
-  // whole scrollable Home with a single, honest call to action instead.
+  // A brand new install (or a fully reset one) must never show quick filter
+  // chips, a "suggestion" hero card or empty section headers as if there
+  // were already content — see Phase 15's first-open UX audit. This replaces
+  // the whole scrollable Home with a single, honest call to action instead.
   if (tracks.length === 0) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -209,26 +211,27 @@ export const HomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Mood Selector Chips */}
+        {/* Quick Filter Chips — backed by data every track actually has
+            (favorites, addedAt, play history), not a guessed genre. */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.moodsContainer}
+          contentContainerStyle={styles.filtersContainer}
         >
-          {MOODS.map((m) => {
-            const isSelected = selectedMood === m.id;
-            const Icon = m.icon;
+          {QUICK_FILTERS.map((f) => {
+            const isSelected = selectedFilter === f.id;
+            const Icon = f.icon;
             return (
               <TouchableOpacity
-                key={m.id}
+                key={f.id}
                 style={[
-                  styles.moodChip,
+                  styles.filterChip,
                   isSelected && {
-                    backgroundColor: m.color,
-                    borderColor: m.color,
+                    backgroundColor: f.color,
+                    borderColor: f.color,
                   },
                 ]}
-                onPress={() => setSelectedMood(m.id)}
+                onPress={() => setSelectedFilter(f.id)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isSelected }}
               >
@@ -238,11 +241,11 @@ export const HomeScreen: React.FC = () => {
                 />
                 <Text
                   style={[
-                    styles.moodText,
-                    isSelected && styles.moodTextSelected,
+                    styles.filterText,
+                    isSelected && styles.filterTextSelected,
                   ]}
                 >
-                  {m.label}
+                  {f.label}
                 </Text>
               </TouchableOpacity>
             );
@@ -491,12 +494,12 @@ function createStyles(colors: ColorTokens) {
       borderWidth: 1,
       borderColor: colors.borderGlass,
     },
-    moodsContainer: {
+    filtersContainer: {
       paddingHorizontal: 20,
       gap: 8,
       paddingBottom: 16,
     },
-    moodChip: {
+    filterChip: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
@@ -507,12 +510,12 @@ function createStyles(colors: ColorTokens) {
       borderWidth: 1,
       borderColor: colors.border,
     },
-    moodText: {
+    filterText: {
       ...typography.bodySmall,
       color: colors.textSecondary,
       fontWeight: '600',
     },
-    moodTextSelected: {
+    filterTextSelected: {
       color: '#FFF',
       fontWeight: '700',
     },

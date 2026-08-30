@@ -50,4 +50,10 @@ export interface EqualizerSettings {
   };
 }
 
-export type MoodCategory = 'all' | 'chill' | 'energy' | 'focus' | 'party' | 'acoustic';
+/**
+ * Home's quick-filter chips. Built only on data every track genuinely has
+ * (favorites, addedAt, play history) — not a guessed mood/genre, which
+ * Track.genre never reliably carries for locally scanned files (see
+ * Phase 5's decision and Phase 15's first-open UX audit).
+ */
+export type QuickFilter = 'all' | 'favorites' | 'recent' | 'unplayed';

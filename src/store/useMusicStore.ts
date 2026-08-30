@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MoodCategory, Playlist, RepeatMode, Track } from '../types/music';
+import { Playlist, QuickFilter, RepeatMode, Track } from '../types/music';
 import { AudioService } from '../services/audioService';
 import { useSettingsStore } from './useSettingsStore';
 import {
@@ -39,7 +39,7 @@ interface MusicStoreState {
   repeatMode: RepeatMode;
   isShuffle: boolean;
   searchQuery: string;
-  selectedMood: MoodCategory;
+  selectedFilter: QuickFilter;
   isLoadingMedia: boolean;
 
   // Actions
@@ -64,7 +64,7 @@ interface MusicStoreState {
   toggleShuffle: () => Promise<void>;
   cycleRepeatMode: () => Promise<void>;
   setSearchQuery: (query: string) => void;
-  setSelectedMood: (mood: MoodCategory) => void;
+  setSelectedFilter: (filter: QuickFilter) => void;
   setLoadingMedia: (loading: boolean) => void;
 }
 
@@ -87,7 +87,7 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
   repeatMode: 'off',
   isShuffle: false,
   searchQuery: '',
-  selectedMood: 'all',
+  selectedFilter: 'all',
   isLoadingMedia: false,
 
   initStore: async () => {
@@ -407,7 +407,7 @@ export const useMusicStore = create<MusicStoreState>((set, get) => ({
 
   setSearchQuery: (query) => set({ searchQuery: query }),
 
-  setSelectedMood: (mood) => set({ selectedMood: mood }),
+  setSelectedFilter: (filter) => set({ selectedFilter: filter }),
 
   setLoadingMedia: (loading) => set({ isLoadingMedia: loading }),
 }));
