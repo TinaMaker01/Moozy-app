@@ -2,9 +2,11 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EqualizerPreset, EqualizerSettings } from '../types/music';
 import { AudioService } from '../services/audioService';
+import { applyEqualizerSettings, isEqualizerSupported } from '../services/equalizerService';
 import {
   ALBUMS_VIEW_MODE_STORAGE_KEY,
   DEFAULT_SORT_STORAGE_KEY,
+  EQUALIZER_STORAGE_KEY,
   EXCLUDED_FOLDERS_STORAGE_KEY,
   HIDE_SHORT_TRACKS_STORAGE_KEY,
   LIST_DENSITY_STORAGE_KEY,
@@ -36,8 +38,21 @@ const DEFAULT_EQUALIZER: EqualizerSettings = {
   bands: { ...PRESET_CONFIGS.Flat },
 };
 
+/**
+ * Writes the equalizer settings to disk and pushes them to the device's
+ * real audio effects in one place, so every action that touches `equalizer`
+ * below (preset, a single band, bass boost, virtualizer) stays in sync with
+ * what's actually applied to playback instead of just updating UI state.
+ */
+function persistAndApplyEqualizer(equalizer: EqualizerSettings) {
+  AsyncStorage.setItem(EQUALIZER_STORAGE_KEY, JSON.stringify(equalizer)).catch(console.warn);
+  applyEqualizerSettings(equalizer);
+}
+
 interface SettingsStoreState {
   equalizer: EqualizerSettings;
+  /** Whether this device actually accepted the native audio effects — see equalizerService.ts. */
+  equalizerSupported: boolean;
   sleepTimerRemainingSeconds: number | null;
   sleepTimerIntervalId: any;
   hapticFeedbackEnabled: boolean;
@@ -79,6 +94,11 @@ interface SettingsStoreState {
 
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   equalizer: DEFAULT_EQUALIZER,
+  // Optimistic default — true on the vast majority of Android devices — so
+  // the Equalizer screen doesn't flash an "unsupported" warning for the
+  // brief moment before initSettings' async native check resolves. Flipped
+  // to false only once that check actually comes back negative.
+  equalizerSupported: true,
   sleepTimerRemainingSeconds: null,
   sleepTimerIntervalId: null,
   hapticFeedbackEnabled: true,
@@ -95,6 +115,13 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   defaultSort: 'title',
 
   initSettings: async () => {
+    // Independent of the persisted-settings load below: detect once whether
+    // this device even accepts the native audio effects, so the Equalizer
+    // screen can say so honestly instead of pretending sliders always work.
+    isEqualizerSupported()
+      .then((supported) => set({ equalizerSupported: supported }))
+      .catch(() => {});
+
     try {
       const [
         storedMode,
@@ -105,6 +132,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         storedReduceMotion,
         storedAlbumsView,
         storedDefaultSort,
+        storedEqualizer,
       ] = await Promise.all([
         AsyncStorage.getItem(THEME_MODE_STORAGE_KEY),
         AsyncStorage.getItem(RESUME_ON_STARTUP_STORAGE_KEY),
@@ -114,6 +142,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         AsyncStorage.getItem(REDUCE_MOTION_STORAGE_KEY),
         AsyncStorage.getItem(ALBUMS_VIEW_MODE_STORAGE_KEY),
         AsyncStorage.getItem(DEFAULT_SORT_STORAGE_KEY),
+        AsyncStorage.getItem(EQUALIZER_STORAGE_KEY),
       ]);
 
       if (storedMode === 'light' || storedMode === 'dark' || storedMode === 'system') {
@@ -140,9 +169,28 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
       if (storedDefaultSort === 'title' || storedDefaultSort === 'artist' || storedDefaultSort === 'recent') {
         set({ defaultSort: storedDefaultSort });
       }
+      if (storedEqualizer) {
+        // Merge over the default rather than trust the stored blob outright —
+        // a future band or field added to EqualizerSettings would otherwise
+        // be missing from an equalizer object saved by an older app version.
+        const parsed = JSON.parse(storedEqualizer);
+        set({
+          equalizer: {
+            ...DEFAULT_EQUALIZER,
+            ...parsed,
+            bands: { ...DEFAULT_EQUALIZER.bands, ...parsed.bands },
+          },
+        });
+      }
     } catch (e) {
       console.warn('Failed to load persisted theme mode:', e);
     }
+
+    // Push whatever equalizer settings we ended up with (restored or
+    // default) to the real audio effects — a fresh app start otherwise
+    // left the previous session's EQ silently un-applied until the user
+    // next touched a slider.
+    applyEqualizerSettings(get().equalizer);
   },
 
   setThemeMode: async (mode) => {
@@ -158,6 +206,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         bands: { ...PRESET_CONFIGS[preset] },
       },
     }));
+    persistAndApplyEqualizer(get().equalizer);
   },
 
   setBandGain: (band, gain) => {
@@ -170,18 +219,21 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         },
       },
     }));
+    persistAndApplyEqualizer(get().equalizer);
   },
 
   setBassBoost: (val) => {
     set((state) => ({
       equalizer: { ...state.equalizer, bassBoost: val },
     }));
+    persistAndApplyEqualizer(get().equalizer);
   },
 
   setVirtualizer: (val) => {
     set((state) => ({
       equalizer: { ...state.equalizer, virtualizer: val },
     }));
+    persistAndApplyEqualizer(get().equalizer);
   },
 
   startSleepTimer: (minutes) => {
@@ -289,6 +341,8 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
       [REDUCE_MOTION_STORAGE_KEY, JSON.stringify(false)],
       [ALBUMS_VIEW_MODE_STORAGE_KEY, 'list'],
       [DEFAULT_SORT_STORAGE_KEY, 'title'],
+      [EQUALIZER_STORAGE_KEY, JSON.stringify(DEFAULT_EQUALIZER)],
     ]);
+    applyEqualizerSettings(DEFAULT_EQUALIZER);
   },
 }));

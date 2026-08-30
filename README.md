@@ -1,6 +1,8 @@
 # Moozy
 
-Un lecteur de musique Android/iOS en React Native : bibliothèque locale, lecture en arrière-plan avec contrôle depuis la notification et l'écran verrouillé, playlists, favoris, égaliseur, minuteur de sommeil.
+Un lecteur de musique Android en React Native : bibliothèque locale, lecture en arrière-plan avec contrôle depuis la notification et l'écran verrouillé, playlists, favoris, égaliseur, minuteur de sommeil.
+
+> Un scaffold iOS existe dans `ios/` mais n'est pas fonctionnel aujourd'hui — la permission d'accès à la musique n'y est pas déclarée et il n'y a pas d'équivalent du scanner natif Android. Ne pas s'y fier tant qu'un vrai chantier iOS n'a pas été fait.
 
 ## Stack technique
 
@@ -14,7 +16,7 @@ Un lecteur de musique Android/iOS en React Native : bibliothèque locale, lectur
 ## Prérequis
 
 - Node.js (>=18)
-- Environnement React Native configuré (Android Studio et/ou Xcode)
+- Environnement React Native configuré (Android Studio)
 
 ## Installation
 
@@ -25,20 +27,16 @@ npm install
 ## Lancer l'app
 
 ```bash
-# Android
 npx react-native run-android
-
-# iOS
-npx react-native run-ios --device
 ```
 
-Pour un appareil physique : activer le mode développeur + débogage USB, le connecter, puis vérifier qu'il est détecté (`adb devices` / `xcrun xctrace list devices`) avant de lancer la commande ci-dessus.
+Pour un appareil physique : activer le mode développeur + débogage USB, le connecter, puis vérifier qu'il est détecté (`adb devices`) avant de lancer la commande ci-dessus.
 
 ## Structure du projet
 
 ```text
 ├── android/                 # Configuration native Android
-├── ios/                     # Configuration native iOS
+├── ios/                     # Scaffold React Native standard, non fonctionnel actuellement (voir plus haut)
 ├── src/
 │   ├── components/          # Composants UI partagés (MiniPlayer, modales, visualiseur…)
 │   ├── hooks/                # Hooks partagés (scan de bibliothèque…)

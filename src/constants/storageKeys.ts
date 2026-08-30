@@ -22,3 +22,4 @@ export const LIST_DENSITY_STORAGE_KEY = '@moozy_list_density_v1';
 export const REDUCE_MOTION_STORAGE_KEY = '@moozy_reduce_motion_v1';
 export const ALBUMS_VIEW_MODE_STORAGE_KEY = '@moozy_albums_view_mode_v1';
 export const DEFAULT_SORT_STORAGE_KEY = '@moozy_default_sort_v1';
+export const EQUALIZER_STORAGE_KEY = '@moozy_equalizer_v1';

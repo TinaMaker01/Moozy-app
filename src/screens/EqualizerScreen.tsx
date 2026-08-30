@@ -9,7 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { AudioSlider } from '../components/AudioSlider';
-import { ChevronLeft, RotateCcw, Sliders, Volume2, Waves } from 'lucide-react-native';
+import { ChevronLeft, RotateCcw, Sliders, TriangleAlert, Volume2, Waves } from 'lucide-react-native';
 import { borderRadius, ColorTokens, shadows, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -41,6 +41,7 @@ export const EqualizerScreen: React.FC = () => {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const {
     equalizer,
+    equalizerSupported,
     setEqualizerPreset,
     setBandGain,
     setBassBoost,
@@ -81,6 +82,16 @@ export const EqualizerScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
+        {equalizerSupported === false && (
+          <View style={styles.unsupportedBanner}>
+            <TriangleAlert size={16} color={colors.textMuted} />
+            <Text style={styles.unsupportedText}>
+              Cet appareil ne prend pas en charge les effets audio natifs — les réglages
+              ci-dessous n'auront pas d'effet sur le son.
+            </Text>
+          </View>
+        )}
+
         {/* Preset Selector Carousel */}
         <Text style={styles.sectionHeading}>Profils Prédéfinis</Text>
         <ScrollView
@@ -98,6 +109,7 @@ export const EqualizerScreen: React.FC = () => {
                   isSelected && styles.presetChipSelected,
                 ]}
                 onPress={() => setEqualizerPreset(p)}
+                disabled={!equalizerSupported}
               >
                 <Text
                   style={[
@@ -138,6 +150,7 @@ export const EqualizerScreen: React.FC = () => {
                       maximumTrackTintColor={colors.progressBarBg}
                       thumbTintColor={colors.primaryLight}
                       onValueChange={(newGain) => setBandGain(b.key, newGain)}
+                      disabled={!equalizerSupported}
                       accessibilityLabel={`Bande ${b.label}`}
                       accessibilityValue={{ min: -10, max: 10, now: val }}
                     />
@@ -177,6 +190,7 @@ export const EqualizerScreen: React.FC = () => {
             maximumTrackTintColor={colors.progressBarBg}
             thumbTintColor={colors.accent}
             onValueChange={setBassBoost}
+            disabled={!equalizerSupported}
             accessibilityLabel="Amplification des basses"
             accessibilityValue={{ min: 0, max: 100, now: equalizer.bassBoost }}
           />
@@ -207,6 +221,7 @@ export const EqualizerScreen: React.FC = () => {
             maximumTrackTintColor={colors.progressBarBg}
             thumbTintColor={colors.secondary}
             onValueChange={setVirtualizer}
+            disabled={!equalizerSupported}
             accessibilityLabel="Spatialisation 3D"
             accessibilityValue={{ min: 0, max: 100, now: equalizer.virtualizer }}
           />
@@ -266,6 +281,24 @@ function createStyles(colors: ColorTokens) {
       justifyContent: 'center',
       borderWidth: 1,
       borderColor: colors.borderGlass,
+    },
+    unsupportedBanner: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginHorizontal: 20,
+      marginBottom: 12,
+      padding: 12,
+      borderRadius: borderRadius.md,
+      backgroundColor: colors.surfaceCard,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+    },
+    unsupportedText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      flex: 1,
+      lineHeight: 18,
     },
     sectionHeading: {
       ...typography.h2,
