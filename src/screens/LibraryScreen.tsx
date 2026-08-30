@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Linking,
   ScrollView,
   SectionList,
   StyleSheet,
@@ -101,7 +102,7 @@ export const LibraryScreen: React.FC = () => {
   const setAlbumsViewMode = useSettingsStore((s) => s.setAlbumsViewMode);
   const [selectedOptionTrack, setSelectedOptionTrack] = useState<Track | null>(null);
   const [createPlaylistVisible, setCreatePlaylistVisible] = useState(false);
-  const { isScanning, scan } = useLibraryScan();
+  const { isScanning, permissionDenied, scan, requestAndScan } = useLibraryScan();
 
   // Selectors: subscribe only to the slices this screen actually reads, so it
   // doesn't re-render (and re-render every row of the track list) on unrelated
@@ -317,10 +318,33 @@ export const LibraryScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Music size={48} color={colors.textMuted} />
-              <Text style={styles.emptyTitle}>Aucun morceau trouvé</Text>
-              <TouchableOpacity style={styles.scanCta} onPress={scan}>
-                <FolderSync size={18} color="#FFF" />
-                <Text style={styles.scanCtaText}>Scanner mes fichiers audio</Text>
+              <Text style={styles.emptyTitle}>
+                {permissionDenied ? 'Accès à la musique refusé' : 'Aucune musique trouvée pour l’instant'}
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {permissionDenied
+                  ? 'Autorisez l’accès aux fichiers audio depuis les paramètres pour voir votre musique ici.'
+                  : 'Moozy cherche les fichiers audio déjà présents sur votre appareil.'}
+              </Text>
+              <TouchableOpacity
+                style={styles.scanCta}
+                onPress={permissionDenied ? () => Linking.openSettings() : requestAndScan}
+                disabled={isScanning}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  permissionDenied ? 'Ouvrir les paramètres de l’application' : 'Scanner mes fichiers audio'
+                }
+              >
+                {isScanning ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <FolderSync size={18} color="#FFF" />
+                    <Text style={styles.scanCtaText}>
+                      {permissionDenied ? 'Ouvrir les paramètres' : 'Scanner mes fichiers audio'}
+                    </Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           }

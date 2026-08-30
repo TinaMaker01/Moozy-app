@@ -44,6 +44,7 @@ import { SleepTimerModal } from '../components/SleepTimerModal';
 import { QueueModal } from '../components/QueueModal';
 import { LyricsModal } from '../components/LyricsModal';
 import { getTrackPalette } from '../utils/artworkColors';
+import { getAudioFormatLabel } from '../utils/audioFormat';
 
 const { width } = Dimensions.get('window');
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -100,6 +101,8 @@ export const PlayerScreen: React.FC = () => {
   const isFavorite = favorites.includes(track.id);
   const currentPos = isSliding ? slidingValue : position;
   const effectiveDuration = duration > 0 ? duration : (track.duration || 180);
+  const formatLabel = getAudioFormatLabel(track);
+  const isLossless = formatLabel === 'LOSSLESS';
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom + 12 }]}>
@@ -186,12 +189,23 @@ export const PlayerScreen: React.FC = () => {
       <View style={styles.metaRow}>
         <View style={styles.metaInfo}>
           <View style={styles.badgeRow}>
-            <View style={styles.hiResBadge}>
-              <Sparkles size={10} color={palette.primary} />
-              <Text style={[styles.hiResText, { color: palette.primary }]}>
-                HI-RES LOSSLESS
-              </Text>
-            </View>
+            {formatLabel && (
+              <View style={styles.hiResBadge}>
+                {isLossless ? (
+                  <Sparkles size={10} color={palette.primary} />
+                ) : (
+                  <Disc size={10} color={colors.textMuted} />
+                )}
+                <Text
+                  style={[
+                    styles.hiResText,
+                    { color: isLossless ? palette.primary : colors.textMuted },
+                  ]}
+                >
+                  {formatLabel}
+                </Text>
+              </View>
+            )}
             {track.genre && (
               <Text style={styles.genreText}>• {track.genre}</Text>
             )}

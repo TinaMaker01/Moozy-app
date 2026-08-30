@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +17,7 @@ import {
   Flame,
   FolderSync,
   Moon,
+  Music,
   Play,
   Sparkles,
   Zap,
@@ -45,7 +48,7 @@ export const HomeScreen: React.FC = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [sleepModalVisible, setSleepModalVisible] = useState(false);
-  const { isScanning, scan } = useLibraryScan();
+  const { isScanning, permissionDenied, scan, requestAndScan } = useLibraryScan();
 
   // Selectors: each hook call subscribes only to the slice it reads, so this
   // screen re-renders when that slice changes — not on every store update
@@ -103,6 +106,62 @@ export const HomeScreen: React.FC = () => {
       return true;
     });
   }, [homeTracks, selectedMood]);
+
+  // A brand new install (or a fully reset one) must never show mood chips,
+  // a "suggestion" hero card or empty section headers as if there were
+  // already content — see Phase 15's first-open UX audit. This replaces the
+  // whole scrollable Home with a single, honest call to action instead.
+  if (tracks.length === 0) {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <View style={styles.firstRunContainer}>
+          <View style={styles.firstRunIconWrap}>
+            <Music size={40} color={colors.primaryLight} />
+          </View>
+          <Text style={styles.firstRunTitle}>Bienvenue sur Moozy</Text>
+          <Text style={styles.firstRunSubtitle}>
+            Moozy lit la musique déjà présente sur votre appareil — rien n’est
+            envoyé en ligne. Pour commencer, autorisez l’accès à vos fichiers
+            audio afin que Moozy puisse les trouver.
+          </Text>
+
+          {permissionDenied ? (
+            <>
+              <Text style={styles.firstRunDeniedText}>
+                L’accès à vos fichiers audio a été refusé. Vous pouvez
+                l’autoriser depuis les paramètres de l’application.
+              </Text>
+              <TouchableOpacity
+                style={styles.firstRunButton}
+                onPress={() => Linking.openSettings()}
+                accessibilityRole="button"
+                accessibilityLabel="Ouvrir les paramètres de l’application"
+              >
+                <Text style={styles.firstRunButtonText}>Ouvrir les paramètres</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={styles.firstRunButton}
+              onPress={requestAndScan}
+              disabled={isScanning}
+              accessibilityRole="button"
+              accessibilityLabel="Trouver ma musique"
+            >
+              {isScanning ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <>
+                  <FolderSync size={18} color="#FFF" />
+                  <Text style={styles.firstRunButtonText}>Trouver ma musique</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -252,35 +311,40 @@ export const HomeScreen: React.FC = () => {
           )}
         />
 
-        {/* Playlists & Coups de Cœur */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Vos Playlists</Text>
-        </View>
+        {/* Playlists & Coups de Cœur — hidden while there are none yet,
+            rather than showing an empty section header with nothing under it. */}
+        {playlists.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Vos Playlists</Text>
+            </View>
 
-        <FlatList
-          data={playlists}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.horizontalList}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.playlistCard}
-              onPress={() =>
-                navigation.navigate('PlaylistDetail', { playlistId: item.id })
-              }
-            >
-              <TrackArtwork uri={item.artwork} style={styles.playlistImage} iconSize={32} />
-              <Text style={styles.playlistName} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text style={styles.playlistDetails}>
-                {item.trackIds.length} morceaux
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
+            <FlatList
+              data={playlists}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.horizontalList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={styles.playlistCard}
+                  onPress={() =>
+                    navigation.navigate('PlaylistDetail', { playlistId: item.id })
+                  }
+                >
+                  <TrackArtwork uri={item.artwork} style={styles.playlistImage} iconSize={32} />
+                  <Text style={styles.playlistName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={styles.playlistDetails}>
+                    {item.trackIds.length} morceaux
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </>
+        )}
 
         {/* Recently Played */}
         {recentlyPlayed.length > 0 && (
@@ -336,6 +400,61 @@ function createStyles(colors: ColorTokens) {
       height: 280,
       borderRadius: 140,
       opacity: 0.35,
+    },
+    firstRunContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 32,
+      gap: 12,
+    },
+    firstRunIconWrap: {
+      width: 84,
+      height: 84,
+      borderRadius: 42,
+      backgroundColor: colors.surfaceCard,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 8,
+    },
+    firstRunTitle: {
+      ...typography.h2,
+      color: colors.text,
+      fontSize: 20,
+      textAlign: 'center',
+    },
+    firstRunSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    firstRunDeniedText: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    firstRunButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: colors.primary,
+      paddingHorizontal: 22,
+      paddingVertical: 14,
+      borderRadius: borderRadius.round,
+      marginTop: 12,
+      minHeight: 48,
+      minWidth: 220,
+      justifyContent: 'center',
+    },
+    firstRunButtonText: {
+      ...typography.bodyLarge,
+      color: '#FFF',
+      fontWeight: '700',
+      fontSize: 15,
     },
     scrollContent: {
       paddingBottom: 120,

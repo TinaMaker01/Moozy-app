@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useMusicStore } from '../store/useMusicStore';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { scanLocalMusicFiles } from '../services/localMusicScanner';
+import { requestStoragePermission, scanLocalMusicFiles } from '../services/localMusicScanner';
 import { Track } from '../types/music';
 
 export interface LibraryScanResult {
@@ -36,6 +36,11 @@ function applyLibraryFilters(found: Track[]): Track[] {
  */
 export function useLibraryScan() {
   const [isScanning, setIsScanning] = useState(false);
+  // Distinguishes "the OS denied the audio permission" from "permission was
+  // granted but the device genuinely has no audio files" — scanLocalMusicFiles
+  // silently returns an empty array for both, which isn't enough to render
+  // the right first-run empty state (see requestAndScan below).
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   const scan = useCallback(async (): Promise<LibraryScanResult> => {
     setIsScanning(true);
@@ -76,5 +81,21 @@ export function useLibraryScan() {
     }
   }, []);
 
-  return { isScanning, scan, rebuild };
+  /**
+   * First-run entry point: explicitly requests the audio permission itself
+   * (rather than relying on scanLocalMusicFiles' internal, silent check) so
+   * the caller can tell a refusal apart from an empty device and show the
+   * right empty state — "autorisez l'accès" vs. "aucun fichier audio trouvé".
+   */
+  const requestAndScan = useCallback(async (): Promise<LibraryScanResult> => {
+    setPermissionDenied(false);
+    const granted = await requestStoragePermission();
+    if (!granted) {
+      setPermissionDenied(true);
+      return { found: [], added: [] };
+    }
+    return scan();
+  }, [scan]);
+
+  return { isScanning, permissionDenied, scan, rebuild, requestAndScan };
 }

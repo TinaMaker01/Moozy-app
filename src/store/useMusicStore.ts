@@ -15,64 +15,6 @@ import {
   TRACKS_STORAGE_KEY,
 } from '../constants/storageKeys';
 
-export const INITIAL_DEMO_TRACKS: Track[] = [
-  {
-    id: 'demo-1',
-    title: 'Midnight City Drive',
-    artist: 'Aura Soundscapes',
-    album: 'Neon Horizons',
-    duration: 215,
-    genre: 'Synthwave / Electronic',
-    artwork: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    isFavorite: true,
-  },
-  {
-    id: 'demo-2',
-    title: 'Cosmic Drift',
-    artist: 'Solaris Waves',
-    album: 'Astral Echoes',
-    duration: 260,
-    genre: 'Lo-Fi / Chillout',
-    artwork: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    isFavorite: false,
-  },
-  {
-    id: 'demo-3',
-    title: 'Deep Focus Pulse',
-    artist: 'Velvet Horizon',
-    album: 'Mindful Echo',
-    duration: 198,
-    genre: 'Ambient / Focus',
-    artwork: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-    isFavorite: true,
-  },
-  {
-    id: 'demo-4',
-    title: 'Hyperdrive Energy',
-    artist: 'Pulse Kinetic',
-    album: 'Velocity Shift',
-    duration: 245,
-    genre: 'Cyberpunk / EDM',
-    artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-    isFavorite: false,
-  },
-  {
-    id: 'demo-5',
-    title: 'Autumn Rain Melody',
-    artist: 'Luna Serenade',
-    album: 'Acoustic Soul',
-    duration: 180,
-    genre: 'Acoustic / Indie',
-    artwork: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
-    isFavorite: false,
-  },
-];
-
 function persistQueue(queue: Track[]) {
   // Only the ids are written, not the full Track objects — the objects
   // themselves already live in TRACKS_STORAGE_KEY, and re-serializing all
@@ -127,35 +69,21 @@ interface MusicStoreState {
 }
 
 export const useMusicStore = create<MusicStoreState>((set, get) => ({
-  tracks: INITIAL_DEMO_TRACKS,
+  // Everything below starts genuinely empty — a first launch must never show
+  // fabricated tracks/favorites/playlists/history as if they belonged to the
+  // user (see Phase 15's UX audit: this used to seed 5 fake streamed demo
+  // tracks plus pre-made playlists/favorites/history, which made a brand new
+  // install look pre-populated with someone else's library instead of
+  // honestly showing an empty one with a way to scan for real music).
+  tracks: [],
   // No track is "current" until the user actually plays one, or a previous
-  // session is restored below in initStore — showing a demo track as
-  // playing before anything was ever tapped made the mini-player appear
-  // with a phantom now-playing card that wasn't actually loaded in the
-  // native player.
+  // session is restored below in initStore.
   currentTrack: null,
-  queue: INITIAL_DEMO_TRACKS,
-  originalQueue: INITIAL_DEMO_TRACKS,
-  favorites: ['demo-1', 'demo-3'],
-  playlists: [
-    {
-      id: 'pl-favorites',
-      name: 'Coups de Cœur ❤️',
-      description: 'Vos morceaux préférés rassemblés',
-      artwork: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-      trackIds: ['demo-1', 'demo-3'],
-      createdAt: Date.now(),
-    },
-    {
-      id: 'pl-chill',
-      name: 'Late Night Chill 🌙',
-      description: 'Ambiance relaxante & onirique',
-      artwork: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-      trackIds: ['demo-2', 'demo-3', 'demo-5'],
-      createdAt: Date.now(),
-    },
-  ],
-  recentlyPlayed: [INITIAL_DEMO_TRACKS[0], INITIAL_DEMO_TRACKS[1]],
+  queue: [],
+  originalQueue: [],
+  favorites: [],
+  playlists: [],
+  recentlyPlayed: [],
   repeatMode: 'off',
   isShuffle: false,
   searchQuery: '',
