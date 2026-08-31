@@ -18,11 +18,13 @@ interface MediaScannerNativeModule {
   scanAudioFiles(): Promise<NativeMediaStoreTrack[]>;
 }
 
-const MediaScanner = NativeModules.MediaScanner as MediaScannerNativeModule | undefined;
+function getMediaScanner(): MediaScannerNativeModule | undefined {
+  return NativeModules.MediaScanner as MediaScannerNativeModule | undefined;
+}
 
 /** Whether the native MediaStore-backed scanner is available (Android only). */
 export function hasNativeLibraryScanner(): boolean {
-  return !!MediaScanner?.scanAudioFiles;
+  return !!getMediaScanner()?.scanAudioFiles;
 }
 
 function folderPathOf(filePath: string): string {
@@ -37,11 +39,12 @@ function folderPathOf(filePath: string): string {
  * album-art URI, straight from what the OS already indexed.
  */
 export async function scanAudioFilesNative(): Promise<Track[]> {
-  if (!MediaScanner?.scanAudioFiles) {
+  const scanner = getMediaScanner();
+  if (!scanner?.scanAudioFiles) {
     return [];
   }
 
-  const rows = await MediaScanner.scanAudioFiles();
+  const rows = await scanner.scanAudioFiles();
 
   return rows.map((row): Track => ({
     id: `local-${row.id}`,

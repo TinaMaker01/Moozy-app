@@ -8,7 +8,9 @@ import {
   DEFAULT_SORT_STORAGE_KEY,
   EQUALIZER_STORAGE_KEY,
   EXCLUDED_FOLDERS_STORAGE_KEY,
+  HAPTIC_FEEDBACK_STORAGE_KEY,
   HIDE_SHORT_TRACKS_STORAGE_KEY,
+  HIGH_QUALITY_AUDIO_STORAGE_KEY,
   LIST_DENSITY_STORAGE_KEY,
   REDUCE_MOTION_STORAGE_KEY,
   RESUME_ON_STARTUP_STORAGE_KEY,
@@ -80,8 +82,8 @@ interface SettingsStoreState {
   setVirtualizer: (val: number) => void;
   startSleepTimer: (minutes: number) => void;
   cancelSleepTimer: () => void;
-  toggleHapticFeedback: () => void;
-  toggleHighQualityAudio: () => void;
+  toggleHapticFeedback: () => Promise<void>;
+  toggleHighQualityAudio: () => Promise<void>;
   toggleResumeOnStartup: () => Promise<void>;
   toggleHideShortTracks: () => Promise<void>;
   toggleExcludedFolder: (folder: string) => Promise<void>;
@@ -133,6 +135,8 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         storedAlbumsView,
         storedDefaultSort,
         storedEqualizer,
+        storedHaptic,
+        storedHighQuality,
       ] = await Promise.all([
         AsyncStorage.getItem(THEME_MODE_STORAGE_KEY),
         AsyncStorage.getItem(RESUME_ON_STARTUP_STORAGE_KEY),
@@ -143,6 +147,8 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         AsyncStorage.getItem(ALBUMS_VIEW_MODE_STORAGE_KEY),
         AsyncStorage.getItem(DEFAULT_SORT_STORAGE_KEY),
         AsyncStorage.getItem(EQUALIZER_STORAGE_KEY),
+        AsyncStorage.getItem(HAPTIC_FEEDBACK_STORAGE_KEY),
+        AsyncStorage.getItem(HIGH_QUALITY_AUDIO_STORAGE_KEY),
       ]);
 
       if (storedMode === 'light' || storedMode === 'dark' || storedMode === 'system') {
@@ -168,6 +174,12 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
       }
       if (storedDefaultSort === 'title' || storedDefaultSort === 'artist' || storedDefaultSort === 'recent') {
         set({ defaultSort: storedDefaultSort });
+      }
+      if (storedHaptic !== null) {
+        set({ hapticFeedbackEnabled: JSON.parse(storedHaptic) });
+      }
+      if (storedHighQuality !== null) {
+        set({ highQualityAudio: JSON.parse(storedHighQuality) });
       }
       if (storedEqualizer) {
         // Merge over the default rather than trust the stored blob outright —
@@ -268,12 +280,16 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     set({ sleepTimerRemainingSeconds: null, sleepTimerIntervalId: null });
   },
 
-  toggleHapticFeedback: () => {
-    set((state) => ({ hapticFeedbackEnabled: !state.hapticFeedbackEnabled }));
+  toggleHapticFeedback: async () => {
+    const next = !get().hapticFeedbackEnabled;
+    set({ hapticFeedbackEnabled: next });
+    await AsyncStorage.setItem(HAPTIC_FEEDBACK_STORAGE_KEY, JSON.stringify(next));
   },
 
-  toggleHighQualityAudio: () => {
-    set((state) => ({ highQualityAudio: !state.highQualityAudio }));
+  toggleHighQualityAudio: async () => {
+    const next = !get().highQualityAudio;
+    set({ highQualityAudio: next });
+    await AsyncStorage.setItem(HIGH_QUALITY_AUDIO_STORAGE_KEY, JSON.stringify(next));
   },
 
   toggleResumeOnStartup: async () => {
@@ -342,6 +358,8 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
       [ALBUMS_VIEW_MODE_STORAGE_KEY, 'list'],
       [DEFAULT_SORT_STORAGE_KEY, 'title'],
       [EQUALIZER_STORAGE_KEY, JSON.stringify(DEFAULT_EQUALIZER)],
+      [HAPTIC_FEEDBACK_STORAGE_KEY, JSON.stringify(true)],
+      [HIGH_QUALITY_AUDIO_STORAGE_KEY, JSON.stringify(true)],
     ]);
     applyEqualizerSettings(DEFAULT_EQUALIZER);
   },

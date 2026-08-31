@@ -14,10 +14,11 @@ interface MoozyEqualizerNativeModule {
 // ever unavailable) every call below silently no-ops rather than throwing,
 // so the Settings UI can stay identical and just stop having any audible
 // effect instead of crashing.
-const NativeEqualizer =
-  Platform.OS === 'android'
+function getNativeEqualizer(): MoozyEqualizerNativeModule | undefined {
+  return Platform.OS === 'android'
     ? (NativeModules.MoozyEqualizer as MoozyEqualizerNativeModule | undefined)
     : undefined;
+}
 
 const BAND_FREQUENCIES_HZ: Record<keyof EqualizerSettings['bands'], number> = {
   hz60: 60,
@@ -29,11 +30,12 @@ const BAND_FREQUENCIES_HZ: Record<keyof EqualizerSettings['bands'], number> = {
 
 /** Whether this device actually accepted the native audio effects — some OEMs restrict them. */
 export async function isEqualizerSupported(): Promise<boolean> {
-  if (!NativeEqualizer) {
+  const nativeEqualizer = getNativeEqualizer();
+  if (!nativeEqualizer) {
     return false;
   }
   try {
-    return await NativeEqualizer.isSupported();
+    return await nativeEqualizer.isSupported();
   } catch (e) {
     return false;
   }
@@ -47,20 +49,21 @@ export async function isEqualizerSupported(): Promise<boolean> {
  * error the Equalizer screen has no meaningful way to act on.
  */
 export async function applyEqualizerSettings(settings: EqualizerSettings): Promise<void> {
-  if (!NativeEqualizer) {
+  const nativeEqualizer = getNativeEqualizer();
+  if (!nativeEqualizer) {
     return;
   }
   try {
-    await NativeEqualizer.setEnabled(true);
+    await nativeEqualizer.setEnabled(true);
     const bands = (Object.keys(settings.bands) as (keyof EqualizerSettings['bands'])[]).map(
       (key) => ({
         hz: BAND_FREQUENCIES_HZ[key],
         gainDb: settings.bands[key],
       })
     );
-    await NativeEqualizer.setBands(bands);
-    await NativeEqualizer.setBassBoostStrength(settings.bassBoost);
-    await NativeEqualizer.setVirtualizerStrength(settings.virtualizer);
+    await nativeEqualizer.setBands(bands);
+    await nativeEqualizer.setBassBoostStrength(settings.bassBoost);
+    await nativeEqualizer.setVirtualizerStrength(settings.virtualizer);
   } catch (e) {
     console.warn('Failed to apply equalizer settings natively:', e);
   }

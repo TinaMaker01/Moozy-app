@@ -33,6 +33,30 @@ describe('useSettingsStore — appearance & playback toggles', () => {
     await useSettingsStore.getState().toggleHideShortTracks();
     expect(useSettingsStore.getState().hideShortTracks).toBe(false);
   });
+
+  it('toggleHapticFeedback flips the flag and persists it', async () => {
+    expect(useSettingsStore.getState().hapticFeedbackEnabled).toBe(true);
+    await useSettingsStore.getState().toggleHapticFeedback();
+    expect(useSettingsStore.getState().hapticFeedbackEnabled).toBe(false);
+    expect(JSON.parse((await AsyncStorage.getItem('@moozy_haptic_feedback_v1')) || 'null')).toBe(false);
+  });
+
+  it('toggleHighQualityAudio flips the flag and persists it', async () => {
+    expect(useSettingsStore.getState().highQualityAudio).toBe(true);
+    await useSettingsStore.getState().toggleHighQualityAudio();
+    expect(useSettingsStore.getState().highQualityAudio).toBe(false);
+    expect(JSON.parse((await AsyncStorage.getItem('@moozy_high_quality_audio_v1')) || 'null')).toBe(false);
+  });
+
+  it('setListDensity and toggleReduceMotion update state and persist', async () => {
+    await useSettingsStore.getState().setListDensity('compact');
+    expect(useSettingsStore.getState().listDensity).toBe('compact');
+    expect(await AsyncStorage.getItem('@moozy_list_density_v1')).toBe('compact');
+
+    await useSettingsStore.getState().toggleReduceMotion();
+    expect(useSettingsStore.getState().reduceMotion).toBe(true);
+    expect(JSON.parse((await AsyncStorage.getItem('@moozy_reduce_motion_v1')) || 'null')).toBe(true);
+  });
 });
 
 describe('useSettingsStore — folder exclusion', () => {
