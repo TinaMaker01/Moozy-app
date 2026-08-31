@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Dimensions,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,7 +46,6 @@ import { LyricsModal } from '../components/LyricsModal';
 import { getTrackPalette } from '../utils/artworkColors';
 import { getAudioFormatLabel } from '../utils/audioFormat';
 
-const { width } = Dimensions.get('window');
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 function formatTime(seconds: number): string {
@@ -60,9 +59,23 @@ function formatTime(seconds: number): string {
 
 export const PlayerScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
   const navigation = useNavigation<NavigationProp>();
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const availableHeight = height - insets.top - insets.bottom;
+  const isCompact = availableHeight < 680;
+  const isVeryCompact = availableHeight < 580;
+
+  const diskSize = Math.max(
+    130,
+    Math.min(width * 0.70, availableHeight * (isCompact ? 0.32 : 0.38), 290)
+  );
+
+  const styles = useMemo(
+    () => createStyles(colors, isCompact, isVeryCompact),
+    [colors, isCompact, isVeryCompact]
+  );
   const [displayMode, setDisplayMode] = useState<'vinyl' | 'card'>('vinyl');
   const [sleepModalVisible, setSleepModalVisible] = useState(false);
   const [queueModalVisible, setQueueModalVisible] = useState(false);
@@ -105,7 +118,15 @@ export const PlayerScreen: React.FC = () => {
   const isLossless = formatLabel === 'LOSSLESS';
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom + 12 }]}>
+    <View
+      style={[
+        styles.screen,
+        {
+          paddingTop: insets.top,
+          paddingBottom: Math.max(insets.bottom, 10) + (isCompact ? 4 : 8),
+        },
+      ]}
+    >
       {/* Dynamic Adaptive Ambient Glow Orbs */}
       <View
         style={[
@@ -169,7 +190,7 @@ export const PlayerScreen: React.FC = () => {
         <AnimatedVinyl
           isPlaying={isPlaying}
           artworkUri={track.artwork}
-          size={Math.min(width * 0.72, 290)}
+          size={diskSize}
           mode={displayMode}
           glowColor={palette.glowPrimary}
         />
@@ -405,7 +426,7 @@ export const PlayerScreen: React.FC = () => {
   );
 };
 
-function createStyles(colors: ColorTokens) {
+function createStyles(colors: ColorTokens, isCompact: boolean, _isVeryCompact: boolean) {
   return StyleSheet.create({
     screen: {
       flex: 1,
@@ -443,7 +464,7 @@ function createStyles(colors: ColorTokens) {
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 20,
-      paddingVertical: 10,
+      paddingVertical: isCompact ? 4 : 10,
       zIndex: 10,
     },
     topBarCenter: {
@@ -465,9 +486,9 @@ function createStyles(colors: ColorTokens) {
       gap: 8,
     },
     circleBtn: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
+      width: isCompact ? 34 : 38,
+      height: isCompact ? 34 : 38,
+      borderRadius: isCompact ? 17 : 19,
       backgroundColor: colors.surfaceCard,
       alignItems: 'center',
       justifyContent: 'center',
@@ -478,11 +499,11 @@ function createStyles(colors: ColorTokens) {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 12,
+      paddingVertical: isCompact ? 4 : 12,
       zIndex: 5,
     },
     visualizerContainer: {
-      marginVertical: 4,
+      marginVertical: isCompact ? 2 : 4,
       zIndex: 5,
     },
     metaRow: {
@@ -490,7 +511,7 @@ function createStyles(colors: ColorTokens) {
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 24,
-      marginTop: 8,
+      marginTop: isCompact ? 4 : 8,
       zIndex: 5,
     },
     metaInfo: {
@@ -501,7 +522,7 @@ function createStyles(colors: ColorTokens) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      marginBottom: 4,
+      marginBottom: isCompact ? 2 : 4,
     },
     hiResBadge: {
       flexDirection: 'row',
@@ -526,56 +547,56 @@ function createStyles(colors: ColorTokens) {
     title: {
       ...typography.hero,
       color: colors.text,
-      fontSize: 22,
+      fontSize: isCompact ? 18 : 22,
       fontWeight: '700',
     },
     artist: {
       ...typography.bodyLarge,
       color: colors.textSecondary,
-      fontSize: 15,
-      marginTop: 3,
+      fontSize: isCompact ? 13 : 15,
+      marginTop: isCompact ? 1 : 3,
     },
     favoriteButton: {
       padding: 6,
     },
     progressContainer: {
       paddingHorizontal: 20,
-      marginTop: 8,
+      marginTop: isCompact ? 2 : 8,
       zIndex: 5,
     },
     slider: {
       width: '100%',
-      height: 36,
+      height: isCompact ? 28 : 36,
     },
     timeRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       paddingHorizontal: 6,
-      marginTop: -6,
+      marginTop: isCompact ? -4 : -6,
     },
     timeText: {
       ...typography.bodySmall,
       color: colors.textMuted,
-      fontSize: 12,
+      fontSize: 11,
     },
     controlsRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 24,
-      marginVertical: 10,
+      marginVertical: isCompact ? 4 : 10,
       zIndex: 5,
     },
     sideControlBtn: {
-      padding: 10,
+      padding: isCompact ? 6 : 10,
     },
     mainControlBtn: {
-      padding: 8,
+      padding: isCompact ? 6 : 8,
     },
     giantPlayBtn: {
-      width: 68,
-      height: 68,
-      borderRadius: 34,
+      width: isCompact ? 56 : 68,
+      height: isCompact ? 56 : 68,
+      borderRadius: isCompact ? 28 : 34,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -583,8 +604,8 @@ function createStyles(colors: ColorTokens) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 12,
-      paddingTop: 6,
+      gap: isCompact ? 8 : 12,
+      paddingTop: isCompact ? 4 : 6,
       zIndex: 5,
     },
     toolBtn: {
@@ -592,8 +613,8 @@ function createStyles(colors: ColorTokens) {
       alignItems: 'center',
       gap: 6,
       backgroundColor: colors.surfaceCard,
-      paddingHorizontal: 14,
-      paddingVertical: 8,
+      paddingHorizontal: isCompact ? 10 : 14,
+      paddingVertical: isCompact ? 6 : 8,
       borderRadius: borderRadius.round,
       borderWidth: 1,
       borderColor: colors.borderGlass,
@@ -602,6 +623,7 @@ function createStyles(colors: ColorTokens) {
       ...typography.bodySmall,
       color: colors.textSecondary,
       fontWeight: '600',
+      fontSize: isCompact ? 11 : 12,
     },
     playIconOffset: {
       marginLeft: 3,

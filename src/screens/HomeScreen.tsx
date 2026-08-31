@@ -460,7 +460,7 @@ function createStyles(colors: ColorTokens) {
       fontSize: 15,
     },
     scrollContent: {
-      paddingBottom: 120,
+      paddingBottom: 160,
     },
     topHeader: {
       flexDirection: 'row',

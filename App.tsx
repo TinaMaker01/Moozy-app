@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -13,9 +13,21 @@ import { useMusicStore } from './src/store/useMusicStore';
 import { useSettingsStore } from './src/store/useSettingsStore';
 import { ThemeProvider, useTheme } from './src/theme';
 
+function getActiveRouteName(state: any): string {
+  if (!state || !state.routes || state.routes.length === 0) {
+    return 'Home';
+  }
+  const route = state.routes[state.index ?? 0];
+  if (route.state) {
+    return getActiveRouteName(route.state);
+  }
+  return route.name;
+}
+
 /** Everything that needs the resolved Light/Dark/System palette lives below the ThemeProvider. */
 function AppContent(): React.JSX.Element {
   const { colors, isDark } = useTheme();
+  const [currentRoute, setCurrentRoute] = useState<string>('Home');
 
   const navTheme = useMemo(() => {
     const base = isDark ? DarkTheme : DefaultTheme;
@@ -39,10 +51,15 @@ function AppContent(): React.JSX.Element {
           Android 15 deprecates its window-inset APIs). */}
       <SystemBars style={isDark ? 'light' : 'dark'} />
       <ErrorBoundary>
-        <NavigationContainer theme={navTheme}>
+        <NavigationContainer
+          theme={navTheme}
+          onStateChange={(state) => {
+            setCurrentRoute(getActiveRouteName(state));
+          }}
+        >
           <View style={[styles.container, { backgroundColor: colors.background }]}>
             <AppNavigator />
-            <MiniPlayer />
+            <MiniPlayer currentRoute={currentRoute} />
           </View>
         </NavigationContainer>
       </ErrorBoundary>

@@ -1,6 +1,8 @@
 import TrackPlayer, { Event } from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PLAYBACK_POSITION_STORAGE_KEY } from '../constants/storageKeys';
+import { CURRENT_TRACK_STORAGE_KEY, PLAYBACK_POSITION_STORAGE_KEY } from '../constants/storageKeys';
+import { useMusicStore } from '../store/useMusicStore';
+import { Track } from '../types/music';
 
 export default async function playbackService() {
   TrackPlayer.addEventListener(Event.RemotePlay, () => TrackPlayer.play());
@@ -16,6 +18,30 @@ export default async function playbackService() {
       await TrackPlayer.stop();
     } else {
       await TrackPlayer.play();
+    }
+  });
+
+  // Keep useMusicStore in sync when track changes automatically or from lockscreen/notification
+  TrackPlayer.addEventListener(Event.PlaybackActiveTrackChanged, async (event) => {
+    if (event.track) {
+      const trackId = event.track.id;
+      const { tracks, currentTrack, setCurrentTrack } = useMusicStore.getState();
+      const matched = tracks.find((t) => t.id === trackId);
+      const newTrack: Track = matched || {
+        id: event.track.id,
+        url: (event.track.url as string) || '',
+        title: event.track.title || 'Titre inconnu',
+        artist: event.track.artist || 'Artiste inconnu',
+        artwork: event.track.artwork as string,
+        duration: event.track.duration,
+        isLocal: true,
+      };
+
+      if (!currentTrack || currentTrack.id !== newTrack.id) {
+        setCurrentTrack(newTrack);
+        AsyncStorage.setItem(CURRENT_TRACK_STORAGE_KEY, JSON.stringify(newTrack)).catch(() => {});
+        AsyncStorage.setItem(PLAYBACK_POSITION_STORAGE_KEY, '0').catch(() => {});
+      }
     }
   });
 

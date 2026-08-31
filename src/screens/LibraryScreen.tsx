@@ -806,7 +806,7 @@ function createStyles(colors: ColorTokens) {
       fontWeight: '700',
     },
     listContent: {
-      paddingBottom: 120,
+      paddingBottom: 160,
     },
     sectionHeaderText: {
       ...typography.caption,

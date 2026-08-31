@@ -80,15 +80,18 @@ export async function setupPlayer(): Promise<boolean> {
 
 /** Maps our app-level Track shape to the fields react-native-track-player expects. */
 function toTrackPlayerFormat(track: Track): TPTrack {
-  return {
+  const item: TPTrack = {
     id: track.id,
     url: track.url,
-    title: track.title,
-    artist: track.artist,
-    artwork: track.artwork,
+    title: track.title || 'Titre inconnu',
+    artist: track.artist || 'Artiste inconnu',
     duration: track.duration,
     genre: track.genre,
   };
+  if (track.artwork && track.artwork.trim().length > 0) {
+    item.artwork = track.artwork.trim();
+  }
+  return item;
 }
 
 export const AudioService = {

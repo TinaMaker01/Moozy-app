@@ -25,7 +25,11 @@ import { VisualizerBar } from './VisualizerBar';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export const MiniPlayer: React.FC = () => {
+interface MiniPlayerProps {
+  currentRoute?: string;
+}
+
+export const MiniPlayer: React.FC<MiniPlayerProps> = ({ currentRoute = 'Home' }) => {
   const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -38,9 +42,19 @@ export const MiniPlayer: React.FC = () => {
   const track = activeTrack || currentTrack;
   const isPlaying = playbackState.state === State.Playing;
 
-  if (!track) {
+  if (!track || currentRoute === 'Player') {
     return null;
   }
+
+  const isTabScreen =
+    currentRoute === 'Home' ||
+    currentRoute === 'Library' ||
+    currentRoute === 'Settings' ||
+    currentRoute === 'MainTabs';
+
+  const bottomOffset = isTabScreen
+    ? 52 + (insets.bottom > 0 ? insets.bottom : 8) + 6
+    : (insets.bottom > 0 ? insets.bottom : 8) + 6;
 
   const progressPercent = duration > 0 ? (position / duration) * 100 : 0;
 
@@ -48,7 +62,7 @@ export const MiniPlayer: React.FC = () => {
     <TouchableOpacity
       activeOpacity={0.92}
       onPress={() => navigation.navigate('Player')}
-      style={[styles.wrapper, { marginBottom: insets.bottom + 8 }]}
+      style={[styles.wrapper, { bottom: bottomOffset }]}
       accessibilityRole="button"
       accessibilityLabel={`Ouvrir le lecteur, ${track.title} par ${track.artist}`}
     >
@@ -118,9 +132,10 @@ export const MiniPlayer: React.FC = () => {
 function createStyles(colors: ColorTokens) {
   return StyleSheet.create({
     wrapper: {
-      marginHorizontal: 12,
-      // marginBottom is set inline (insets.bottom + 8) to clear the transparent
-      // edge-to-edge gesture/nav bar — see the JSX usage above.
+      position: 'absolute',
+      left: 10,
+      right: 10,
+      zIndex: 99,
       borderRadius: borderRadius.lg,
       backgroundColor: colors.playerBarBg,
       borderWidth: 1,

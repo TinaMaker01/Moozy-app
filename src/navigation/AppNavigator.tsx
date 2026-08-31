@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Compass, Library, Settings } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ColorTokens, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { RootStackParamList, RootTabParamList } from '../types/navigation';
@@ -35,12 +36,15 @@ function SettingsTabIcon({ color, size }: { color: string; size: number }) {
 // Library — see Phase 4 navigation notes.
 const TabNavigator = () => {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 8;
+  const styles = useMemo(() => createStyles(colors, bottomInset), [colors, bottomInset]);
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: colors.primaryLight,
         tabBarInactiveTintColor: colors.textMuted,
@@ -112,14 +116,14 @@ export const AppNavigator = () => {
   );
 };
 
-function createStyles(colors: ColorTokens) {
+function createStyles(colors: ColorTokens, bottomInset: number) {
   return StyleSheet.create({
     tabBar: {
       backgroundColor: colors.tabBarBg,
       borderTopWidth: 1,
       borderTopColor: colors.borderGlass,
-      height: 60,
-      paddingBottom: 8,
+      height: 52 + bottomInset,
+      paddingBottom: bottomInset,
       paddingTop: 6,
     },
     tabBarLabel: {

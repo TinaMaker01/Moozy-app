@@ -238,7 +238,7 @@ function createStyles(colors: ColorTokens) {
       backgroundColor: colors.background,
     },
     scrollContent: {
-      paddingBottom: 120,
+      paddingBottom: 140,
     },
     header: {
       flexDirection: 'row',

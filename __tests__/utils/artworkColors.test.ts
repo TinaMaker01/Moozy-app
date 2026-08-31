@@ -10,7 +10,6 @@ describe('artworkColors', () => {
   it('generates consistent deterministic palettes for the same input string', () => {
     const paletteA1 = getTrackPalette('Song A');
     const paletteA2 = getTrackPalette('Song A');
-    const paletteB = getTrackPalette('Song B');
 
     expect(paletteA1).toEqual(paletteA2);
     expect(paletteA1).toBeDefined();

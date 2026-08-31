@@ -552,7 +552,7 @@ function createStyles(colors: ColorTokens) {
       backgroundColor: colors.background,
     },
     scrollContent: {
-      paddingBottom: 120,
+      paddingBottom: 160,
     },
     header: {
       paddingHorizontal: 20,
