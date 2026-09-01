@@ -3,12 +3,13 @@ import {
   ActivityIndicator,
   FlatList,
   Linking,
-  ScrollView,
+  Modal,
   SectionList,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +18,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   ArrowDownAZ,
   ArrowUpDown,
+  Check,
+  ChevronDown,
   Clock,
   Disc3,
   Folder,
@@ -33,7 +36,7 @@ import {
   User,
   X,
 } from 'lucide-react-native';
-import { borderRadius, ColorTokens, typography } from '../theme';
+import { borderRadius, ColorTokens, shadows, typography } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useMusicStore } from '../store/useMusicStore';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -105,6 +108,101 @@ const LARGE_LIST_PERF_PROPS = {
   removeClippedSubviews: true,
 } as const;
 
+interface SheetOption<T extends string> {
+  id: T;
+  label: string;
+  icon: any;
+}
+
+/**
+ * Bottom sheet listing a small set of mutually-exclusive options (the 6
+ * library categories, or the 3 sort orders) — replaces what used to be a
+ * permanently-visible row of chips. Follows the same card convention as the
+ * app's other option sheets (see TrackOptionsModal): dark backdrop, rounded
+ * top corners, header + close button, divider, one row per option with a
+ * checkmark on the current selection.
+ */
+function SelectorSheet<T extends string>({
+  visible,
+  onClose,
+  title,
+  options,
+  selectedId,
+  onSelect,
+  colors,
+  styles,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  title: string;
+  options: SheetOption<T>[];
+  selectedId: T;
+  onSelect: (id: T) => void;
+  colors: ColorTokens;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent
+      navigationBarTranslucent
+    >
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.sheetBackdrop}>
+          <TouchableWithoutFeedback>
+            <View style={styles.sheetCard}>
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>{title}</Text>
+                <TouchableOpacity
+                  onPress={onClose}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Fermer"
+                >
+                  <X size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.sheetDivider} />
+              {options.map((opt) => {
+                const isSelected = selectedId === opt.id;
+                const Icon = opt.icon;
+                return (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[styles.sheetRow, isSelected && styles.sheetRowSelected]}
+                    onPress={() => {
+                      onSelect(opt.id);
+                      onClose();
+                    }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
+                  >
+                    <View
+                      style={[
+                        styles.sheetIconCircle,
+                        isSelected && styles.sheetIconCircleSelected,
+                      ]}
+                    >
+                      <Icon size={18} color={isSelected ? colors.primaryLight : colors.textSecondary} />
+                    </View>
+                    <Text style={[styles.sheetLabel, isSelected && styles.sheetLabelSelected]}>
+                      {opt.label}
+                    </Text>
+                    {isSelected && <Check size={18} color={colors.primaryLight} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+}
+
 function sortTracks(list: Track[], sortBy: SortOption): Track[] {
   const sorted = [...list];
   if (sortBy === 'title') {
@@ -132,6 +230,8 @@ export const LibraryScreen: React.FC = () => {
   const setAlbumsViewMode = useSettingsStore((s) => s.setAlbumsViewMode);
   const [selectedOptionTrack, setSelectedOptionTrack] = useState<Track | null>(null);
   const [createPlaylistVisible, setCreatePlaylistVisible] = useState(false);
+  const [categorySheetVisible, setCategorySheetVisible] = useState(false);
+  const [sortSheetVisible, setSortSheetVisible] = useState(false);
   const { isScanning, permissionDenied, scan, requestAndScan } = useLibraryScan();
 
   // Selectors: subscribe only to the slices this screen actually reads, so it
@@ -235,6 +335,8 @@ export const LibraryScreen: React.FC = () => {
   }, [isSearching, debouncedQuery, tracks, artistsList, albumsList, playlists]);
 
   const showSortControl = !isSearching && (activeTab === 'tracks' || activeTab === 'favorites');
+  const ActiveTabIcon = TAB_ICONS[activeTab];
+  const activeSortLabel = SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? '';
 
   // One count for whichever tab is active, shown once as a header subtitle
   // rather than crammed into every tab chip's label (see LIBRARY_TABS above).
@@ -662,80 +764,61 @@ export const LibraryScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Sub-tabs Carousel — hidden while searching since results are shown
-          categorized across everything instead of scoped to one tab. */}
+      {/* Category selector — one pill opens a sheet listing all 6 categories,
+          instead of six always-visible chips crammed into a scroller (the
+          previous layout became unreadable on a real device once each chip
+          carried a live item count). Hidden while searching, whose results
+          are already shown categorized across everything at once. */}
       {!isSearching && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsContainer}
-        >
-          {LIBRARY_TABS.map((id) => {
-            const isSelected = activeTab === id;
-            const Icon = TAB_ICONS[id];
-            return (
-              <TouchableOpacity
-                key={id}
-                style={[styles.tabChip, isSelected && styles.tabChipSelected]}
-                onPress={() => setActiveTab(id)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: isSelected }}
-              >
-                <Icon size={15} color={isSelected ? '#FFF' : colors.textSecondary} />
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    isSelected && styles.tabLabelSelected,
-                  ]}
-                >
-                  {TAB_LABELS[id]}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
-
-      {/* Sort Control — only meaningful for the flat track lists */}
-      {showSortControl && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.sortRow}
-        >
-          <View
-            style={styles.sortLabelWrap}
-            accessible
-            accessibilityLabel="Trier par"
-            accessibilityRole="none"
+        <View style={styles.selectorRow}>
+          <TouchableOpacity
+            style={styles.categoryPill}
+            onPress={() => setCategorySheetVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Catégorie : ${TAB_LABELS[activeTab]}. Toucher pour changer.`}
           >
-            <ArrowUpDown size={13} color={colors.textMuted} />
-          </View>
-          {SORT_OPTIONS.map((opt) => {
-            const isSelected = sortBy === opt.id;
-            const Icon = opt.icon;
-            return (
-              <TouchableOpacity
-                key={opt.id}
-                style={[styles.sortChip, isSelected && styles.sortChipSelected]}
-                onPress={() => setSortBy(opt.id)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-              >
-                <Icon size={13} color={isSelected ? colors.primaryLight : colors.textSecondary} />
-                <Text
-                  style={[styles.sortChipText, isSelected && styles.sortChipTextSelected]}
-                >
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+            <ActiveTabIcon size={16} color={colors.primaryLight} />
+            <Text style={styles.categoryPillLabel}>{TAB_LABELS[activeTab]}</Text>
+            <ChevronDown size={15} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          {showSortControl && (
+            <TouchableOpacity
+              style={styles.scanBtn}
+              onPress={() => setSortSheetVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Trier par ${activeSortLabel}. Toucher pour changer.`}
+            >
+              <ArrowUpDown size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
       )}
 
       {/* Main List Body */}
       {isSearching ? renderSearchResults() : renderTabContent()}
+
+      <SelectorSheet
+        visible={categorySheetVisible}
+        onClose={() => setCategorySheetVisible(false)}
+        title="Choisir une catégorie"
+        options={LIBRARY_TABS.map((id) => ({ id, label: TAB_LABELS[id], icon: TAB_ICONS[id] }))}
+        selectedId={activeTab}
+        onSelect={setActiveTab}
+        colors={colors}
+        styles={styles}
+      />
+
+      <SelectorSheet
+        visible={sortSheetVisible}
+        onClose={() => setSortSheetVisible(false)}
+        title="Trier par"
+        options={SORT_OPTIONS}
+        selectedId={sortBy}
+        onSelect={setSortBy}
+        colors={colors}
+        styles={styles}
+      />
 
       <TrackOptionsModal
         track={selectedOptionTrack}
@@ -811,65 +894,95 @@ function createStyles(colors: ColorTokens) {
       color: colors.text,
       fontSize: 14,
     },
-    tabsContainer: {
-      paddingHorizontal: 20,
-      gap: 8,
-      paddingBottom: 12,
-    },
-    tabChip: {
+    selectorRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
-      paddingHorizontal: 14,
-      paddingVertical: 7,
-      borderRadius: borderRadius.round,
+      gap: 10,
+      marginHorizontal: 20,
+      marginBottom: 14,
+    },
+    categoryPill: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
       backgroundColor: colors.surfaceCard,
       borderWidth: 1,
       borderColor: colors.border,
+      borderRadius: borderRadius.round,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
     },
-    tabChipSelected: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    tabLabel: {
-      ...typography.bodySmall,
-      color: colors.textSecondary,
-      fontWeight: '600',
-    },
-    tabLabelSelected: {
-      color: '#FFF',
+    categoryPillLabel: {
+      ...typography.bodyLarge,
+      flex: 1,
+      color: colors.text,
+      fontSize: 14,
       fontWeight: '700',
     },
-    sortRow: {
-      paddingHorizontal: 20,
-      alignItems: 'center',
-      gap: 8,
-      paddingBottom: 10,
+    sheetBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
     },
-    sortLabelWrap: {
-      marginRight: 2,
+    sheetCard: {
+      backgroundColor: colors.surfaceCard,
+      borderTopLeftRadius: borderRadius.xxl,
+      borderTopRightRadius: borderRadius.xxl,
+      padding: 20,
+      borderWidth: 1,
+      borderColor: colors.borderGlass,
+      ...shadows.soft,
     },
-    sortChip: {
+    sheetHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 5,
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: borderRadius.round,
+      justifyContent: 'space-between',
+    },
+    sheetTitle: {
+      ...typography.h3,
+      color: colors.text,
+      fontSize: 16,
+    },
+    sheetDivider: {
+      height: 1,
+      backgroundColor: colors.divider,
+      marginVertical: 16,
+    },
+    sheetRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+      marginHorizontal: -8,
+      borderRadius: borderRadius.md,
+    },
+    sheetRowSelected: {
+      backgroundColor: colors.activeTrackBg,
+    },
+    sheetIconCircle: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
       backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 14,
       borderWidth: 1,
       borderColor: colors.border,
     },
-    sortChipSelected: {
+    sheetIconCircleSelected: {
       backgroundColor: colors.activeTrackBg,
       borderColor: colors.primary,
     },
-    sortChipText: {
-      ...typography.bodySmall,
-      color: colors.textSecondary,
-      fontSize: 12,
+    sheetLabel: {
+      ...typography.bodyLarge,
+      flex: 1,
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '500',
     },
-    sortChipTextSelected: {
+    sheetLabelSelected: {
       color: colors.primaryLight,
       fontWeight: '700',
     },
