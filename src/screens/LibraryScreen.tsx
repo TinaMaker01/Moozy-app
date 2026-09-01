@@ -15,6 +15,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
+  ArrowDownAZ,
+  ArrowUpDown,
+  Clock,
+  Disc3,
   Folder,
   FolderSync,
   Heart,
@@ -26,6 +30,7 @@ import {
   Rows3,
   Search,
   SearchX,
+  User,
   X,
 } from 'lucide-react-native';
 import { borderRadius, ColorTokens, typography } from '../theme';
@@ -56,11 +61,36 @@ type SearchSection =
   | { title: string; type: 'album'; data: AlbumGroup[] }
   | { title: string; type: 'playlist'; data: Playlist[] };
 
-const SORT_OPTIONS: { id: SortOption; label: string }[] = [
-  { id: 'title', label: 'Titre' },
-  { id: 'artist', label: 'Artiste' },
-  { id: 'recent', label: 'Récemment ajouté' },
+const SORT_OPTIONS: { id: SortOption; label: string; icon: any }[] = [
+  { id: 'title', label: 'Titre', icon: ArrowDownAZ },
+  { id: 'artist', label: 'Artiste', icon: User },
+  { id: 'recent', label: 'Récent', icon: Clock },
 ];
+
+// Short, icon-backed labels — the previous "Pistes (1243)" style counts made
+// this row unreadable on a real device once the library got past a few
+// hundred items (six chips, each with a 3-4 digit count, crammed into one
+// horizontal scroller). The count for whichever tab is active now shows
+// once, as a subtitle under the screen title, instead of six times over.
+const TAB_ICONS: Record<LibraryTab, any> = {
+  tracks: Music,
+  favorites: Heart,
+  artists: Mic,
+  albums: Disc3,
+  folders: Folder,
+  playlists: ListMusic,
+};
+
+const TAB_LABELS: Record<LibraryTab, string> = {
+  tracks: 'Pistes',
+  favorites: 'Favoris',
+  artists: 'Artistes',
+  albums: 'Albums',
+  folders: 'Dossiers',
+  playlists: 'Playlists',
+};
+
+const LIBRARY_TABS: LibraryTab[] = ['tracks', 'favorites', 'artists', 'albums', 'folders', 'playlists'];
 
 // Tuned for a library that can hold several thousand tracks: render fewer
 // rows per batch and keep a smaller offscreen window than the defaults, and
@@ -205,6 +235,28 @@ export const LibraryScreen: React.FC = () => {
   }, [isSearching, debouncedQuery, tracks, artistsList, albumsList, playlists]);
 
   const showSortControl = !isSearching && (activeTab === 'tracks' || activeTab === 'favorites');
+
+  // One count for whichever tab is active, shown once as a header subtitle
+  // rather than crammed into every tab chip's label (see LIBRARY_TABS above).
+  const activeTabCountLabel = useMemo(() => {
+    const plural = (n: number, word: string) => `${n} ${word}${n !== 1 ? 's' : ''}`;
+    switch (activeTab) {
+      case 'tracks':
+        return plural(filteredTracks.length, 'titre');
+      case 'favorites':
+        return plural(favoriteTracks.length, 'favori');
+      case 'artists':
+        return plural(artistsList.length, 'artiste');
+      case 'albums':
+        return plural(albumsList.length, 'album');
+      case 'folders':
+        return plural(foldersList.length, 'dossier');
+      case 'playlists':
+        return plural(playlists.length, 'playlist');
+      default:
+        return '';
+    }
+  }, [activeTab, filteredTracks, favoriteTracks, artistsList, albumsList, foldersList, playlists]);
 
   const renderSearchResults = () => {
     if (searchSections.length === 0) {
@@ -541,7 +593,12 @@ export const LibraryScreen: React.FC = () => {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Top Bar */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Bibliothèque</Text>
+        <View>
+          <Text style={styles.headerTitle}>Bibliothèque</Text>
+          {!isSearching && (
+            <Text style={styles.headerSubtitle}>{activeTabCountLabel}</Text>
+          )}
+        </View>
         <View style={styles.headerActions}>
           {activeTab === 'albums' && (
             <TouchableOpacity
@@ -613,32 +670,25 @@ export const LibraryScreen: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabsContainer}
         >
-          {(
-            [
-              { id: 'tracks', label: `Pistes (${filteredTracks.length})` },
-              { id: 'favorites', label: `Favoris (${favorites.length})` },
-              { id: 'artists', label: `Artistes (${artistsList.length})` },
-              { id: 'albums', label: `Albums (${albumsList.length})` },
-              { id: 'folders', label: `Dossiers (${foldersList.length})` },
-              { id: 'playlists', label: `Playlists (${playlists.length})` },
-            ] as { id: LibraryTab; label: string }[]
-          ).map((t) => {
-            const isSelected = activeTab === t.id;
+          {LIBRARY_TABS.map((id) => {
+            const isSelected = activeTab === id;
+            const Icon = TAB_ICONS[id];
             return (
               <TouchableOpacity
-                key={t.id}
+                key={id}
                 style={[styles.tabChip, isSelected && styles.tabChipSelected]}
-                onPress={() => setActiveTab(t.id)}
+                onPress={() => setActiveTab(id)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isSelected }}
               >
+                <Icon size={15} color={isSelected ? '#FFF' : colors.textSecondary} />
                 <Text
                   style={[
                     styles.tabLabel,
                     isSelected && styles.tabLabelSelected,
                   ]}
                 >
-                  {t.label}
+                  {TAB_LABELS[id]}
                 </Text>
               </TouchableOpacity>
             );
@@ -653,9 +703,17 @@ export const LibraryScreen: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.sortRow}
         >
-          <Text style={styles.sortLabel}>Trier :</Text>
+          <View
+            style={styles.sortLabelWrap}
+            accessible
+            accessibilityLabel="Trier par"
+            accessibilityRole="none"
+          >
+            <ArrowUpDown size={13} color={colors.textMuted} />
+          </View>
           {SORT_OPTIONS.map((opt) => {
             const isSelected = sortBy === opt.id;
+            const Icon = opt.icon;
             return (
               <TouchableOpacity
                 key={opt.id}
@@ -664,6 +722,7 @@ export const LibraryScreen: React.FC = () => {
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isSelected }}
               >
+                <Icon size={13} color={isSelected ? colors.primaryLight : colors.textSecondary} />
                 <Text
                   style={[styles.sortChipText, isSelected && styles.sortChipTextSelected]}
                 >
@@ -714,6 +773,11 @@ function createStyles(colors: ColorTokens) {
       color: colors.text,
       fontSize: 26,
     },
+    headerSubtitle: {
+      ...typography.bodySmall,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
     headerActions: {
       flexDirection: 'row',
       gap: 8,
@@ -753,6 +817,9 @@ function createStyles(colors: ColorTokens) {
       paddingBottom: 12,
     },
     tabChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
       paddingHorizontal: 14,
       paddingVertical: 7,
       borderRadius: borderRadius.round,
@@ -779,12 +846,13 @@ function createStyles(colors: ColorTokens) {
       gap: 8,
       paddingBottom: 10,
     },
-    sortLabel: {
-      ...typography.bodySmall,
-      color: colors.textMuted,
+    sortLabelWrap: {
       marginRight: 2,
     },
     sortChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
       paddingHorizontal: 12,
       paddingVertical: 5,
       borderRadius: borderRadius.round,
